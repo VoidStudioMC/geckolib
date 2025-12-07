@@ -75,7 +75,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 	public void onResourceManagerReload(IResourceManager resourceManager) {
 		HashMap<ResourceLocation, AnimationFile> tempAnimations = new HashMap<>();
 		HashMap<ResourceLocation, GeoModel> tempModels = new HashMap<>();
-		List<IResourcePack> packs = this.getPacks();
+		List<IResourcePack> packs = FMLClientHandler.instance().getResourcePackList();
 
 		if (packs == null) {
 			return;
@@ -104,49 +104,17 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 		geoModels = tempModels;
 	}
 
-	@SuppressWarnings("unchecked")
-	private List<IResourcePack> getPacks() {
-		try {
-			Field field = FMLClientHandler.class.getDeclaredField("resourcePackList");
-			field.setAccessible(true);
-
-			return (List<IResourcePack>) field.get(FMLClientHandler.instance());
-		} catch (Exception e) {
-			GeckoLib.LOGGER.error("Error accessing resource pack list!", e);
-		}
-
-		return null;
-	}
-
-	private List<ResourceLocation> getLocations(IResourcePack pack, String folder, Predicate<String> predicate) {
-		if (pack instanceof LegacyV2Adapter) {
-			LegacyV2Adapter adapter = (LegacyV2Adapter) pack;
-			Field packField = null;
-
-			for (Field field : adapter.getClass().getDeclaredFields()) {
-				if (field.getType() == IResourcePack.class) {
-					packField = field;
-
-					break;
-				}
-			}
-
-			if (packField != null) {
-				packField.setAccessible(true);
-
-				try {
-					return this.getLocations((IResourcePack) packField.get(adapter), folder, predicate);
-				} catch (Exception e) {
-				}
-			}
+    private List<ResourceLocation> getLocations(IResourcePack pack, String folder, Predicate<String> predicate) {
+		if (pack instanceof LegacyV2Adapter adapter) {
+            return this.getLocations(adapter.getUnadaptedPack(), folder, predicate);
 		}
 
 		List<ResourceLocation> locations = new ArrayList<>();
 
-		if (pack instanceof FolderResourcePack) {
-			this.handleFolderResourcePack((FolderResourcePack) pack, folder, predicate, locations);
-		} else if (pack instanceof FileResourcePack) {
-			this.handleZipResourcePack((FileResourcePack) pack, folder, predicate, locations);
+		if (pack instanceof FolderResourcePack folderResourcePack) {
+			this.handleFolderResourcePack(folderResourcePack, folder, predicate, locations);
+		} else if (pack instanceof FileResourcePack fileResourcePack) {
+			this.handleZipResourcePack(fileResourcePack, folder, predicate, locations);
 		}
 
 		return locations;
@@ -156,38 +124,21 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	private void handleFolderResourcePack(FolderResourcePack folderPack, String folder, Predicate<String> predicate,
 			List<ResourceLocation> locations) {
-		Field fileField = null;
+        File file = folderPack.getResourcePackFile();
+        Set<String> domains = folderPack.getResourceDomains();
 
-		for (Field field : AbstractResourcePack.class.getDeclaredFields()) {
-			if (field.getType() == File.class) {
-				fileField = field;
+        if (folderPack instanceof FMLFolderResourcePack fmlFolderResourcePack) {
+            domains.add(fmlFolderResourcePack.getFMLContainer().getModId());
+        }
 
-				break;
-			}
-		}
+        for (String domain : domains) {
+            String prefix = "assets/" + domain + "/" + folder;
+            File pathFile = new File(file, prefix);
 
-		if (fileField != null) {
-			fileField.setAccessible(true);
+            this.enumerateFiles(folderPack, pathFile, predicate, locations, domain, folder);
+        }
 
-			try {
-				File file = (File) fileField.get(folderPack);
-				Set<String> domains = folderPack.getResourceDomains();
-
-				if (folderPack instanceof FMLFolderResourcePack) {
-					domains.add(((FMLFolderResourcePack) folderPack).getFMLContainer().getModId());
-				}
-
-				for (String domain : domains) {
-					String prefix = "assets/" + domain + "/" + folder;
-					File pathFile = new File(file, prefix);
-
-					this.enumerateFiles(folderPack, pathFile, predicate, locations, domain, folder);
-				}
-			} catch (IllegalAccessException e) {
-				GeckoLib.LOGGER.error(e);
-			}
-		}
-	}
+    }
 
 	private void enumerateFiles(FolderResourcePack folderPack, File parent, Predicate<String> predicate,
 			List<ResourceLocation> locations, String domain, String prefix) {
