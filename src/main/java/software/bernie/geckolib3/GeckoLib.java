@@ -8,13 +8,14 @@ import org.apache.logging.log4j.Logger;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import software.bernie.geckolib3.Reference;
 import software.bernie.geckolib3.resource.ResourceListener;
 
 public class GeckoLib {
 	public static final Logger LOGGER = LogManager.getLogger();
 	public static final String ModID = "geckolib3";
 	public static boolean hasInitialized;
-	public static final String VERSION = "3.0.30";
+	public static final String VERSION = Reference.VERSION;
 
 	/**
 	 * This method MUST be called in your mod's constructor or during

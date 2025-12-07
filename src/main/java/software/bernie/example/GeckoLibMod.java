@@ -38,11 +38,11 @@ import software.bernie.geckolib3.GeckoLib;
 import software.bernie.geckolib3.renderers.geo.GeoArmorRenderer;
 import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
-@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION)
+@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION, dependencies = "required-after:cleanroom@[0.3.28-alpha,);")
 public class GeckoLibMod {
 	public static boolean DISABLE_IN_DEV = false;
 	private static CreativeTabs geckolibItemGroup;
-	private boolean deobfuscatedEnvironment;
+	private final boolean deobfuscatedEnvironment;
 
 	public static CreativeTabs getGeckolibItemGroup() {
 		if (geckolibItemGroup == null) {
