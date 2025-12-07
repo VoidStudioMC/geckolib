@@ -1,6 +1,7 @@
 package software.bernie.geckolib3.resource;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -86,8 +87,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 				try {
 					tempAnimations.put(location, animationLoader.loadAllAnimations(parser, location, resourceManager));
 				} catch (Exception e) {
-					e.printStackTrace();
-					GeckoLib.LOGGER.error("Error loading animation file \"" + location + "\"!", e);
+					GeckoLib.LOGGER.debug("Error loading animation file \"" + location + "\"!", e);
 				}
 			}
 
@@ -95,8 +95,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 				try {
 					tempModels.put(location, modelLoader.loadModel(resourceManager, location));
 				} catch (Exception e) {
-					e.printStackTrace();
-					GeckoLib.LOGGER.error("Error loading model file \"" + location + "\"!", e);
+					GeckoLib.LOGGER.debug("Error loading model file \"" + location + "\"!", e);
 				}
 			}
 		}
@@ -142,7 +141,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 			}
 		}
 
-		List<ResourceLocation> locations = new ArrayList<ResourceLocation>();
+		List<ResourceLocation> locations = new ArrayList<>();
 
 		if (pack instanceof FolderResourcePack) {
 			this.handleFolderResourcePack((FolderResourcePack) pack, folder, predicate, locations);
@@ -211,25 +210,12 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	private void handleZipResourcePack(FileResourcePack filePack, String folder, Predicate<String> predicate,
 			List<ResourceLocation> locations) {
-		Field zipField = null;
+        try {
+            this.enumerateZipFile(filePack, folder, filePack.getResourcePackZipFile(), predicate, locations);
+        } catch (IOException e) {
+            GeckoLib.LOGGER.error(e);
+        }
 
-		for (Field field : FileResourcePack.class.getDeclaredFields()) {
-			if (field.getType() == ZipFile.class) {
-				zipField = field;
-
-				break;
-			}
-		}
-
-		if (zipField != null) {
-			zipField.setAccessible(true);
-
-			try {
-				this.enumerateZipFile(filePack, folder, (ZipFile) zipField.get(filePack), predicate, locations);
-			} catch (IllegalAccessException e) {
-				GeckoLib.LOGGER.error(e);
-			}
-		}
 	}
 
 	private void enumerateZipFile(FileResourcePack filePack, String folder, ZipFile file, Predicate<String> predicate,

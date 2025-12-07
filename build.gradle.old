@@ -1,0 +1,205 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+		maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+        classpath 'gradle.plugin.com.matthewprenger:CurseGradle:1.4.0'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+apply plugin: 'com.matthewprenger.cursegradle'
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+version = project.mod_version
+group = project.maven_group
+archivesBaseName = project.archives_base_name
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+configurations {
+    shade
+}
+
+
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+    runs {
+        client {
+            workingDirectory project.file('run')
+        }
+
+        server {
+            workingDirectory project.file('server')
+        }
+    }
+}
+
+repositories {
+    maven { url 'https://maven.enginehub.org/repo/' }
+    maven { url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+	maven { url "https://cfa2.cursemaven.com" }
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
+    compile 'com.eliotlash.molang:molang:18'
+    compile 'com.eliotlash.mclib:mclib:18'
+    compile project(':geckolib-core')
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.0'
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.9.0'
+    compile 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+
+    shade 'com.eliotlash.molang:molang:18'
+    shade 'com.eliotlash.mclib:mclib:18'
+    shade project(':geckolib-core')
+    shade group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.0'
+    shade group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.9.0'
+
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.6.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+
+    test {
+        useJUnitPlatform()
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    from sourceSets.main.allSource
+	exclude('META-INF/services/**')
+    relocate 'com.eliotlash', 'software.bernie.shadowed.eliotlash'
+    relocate 'com.fasterxml', 'software.bernie.shadowed.fasterxml'
+    classifier ''
+}
+
+
+reobf {
+    shadowJar {}
+}
+tasks.build.dependsOn reobfShadowJar
+publish.dependsOn('reobfJar')
+shadowJar.dependsOn('classes')
+jar.finalizedBy('reobfJar')
+
+jar {
+    manifest {
+        attributes([
+                "FMLModType"              : "LIBRARY",
+                "Specification-Title"     : "GeckoLib",
+                "Specification-Vendor"    : "Gecko",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : "${version}",
+                "Implementation-Vendor"   : "Gecko",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+task packageSources(type: ShadowJar, dependsOn: 'classes') {
+    configurations = [project.configurations.shade]
+    from sourceSets.main.allSource
+    exclude('META-INF/**')
+    relocate 'com.eliotlash', 'software.bernie.shadowed.eliotlash'
+    relocate 'com.fasterxml', 'software.bernie.shadowed.fasterxml'
+    classifier = 'sources'
+}
+
+
+artifacts {
+    archives shadowJar
+    archives packageSources
+}
+
+afterEvaluate {
+    publish.dependsOn('reobfShadowJar')
+    publish.dependsOn('reobfJar')
+    publish.dependsOn('packageSources')
+    shadowJar.dependsOn(packageSources)
+    shadowJar.dependsOn('classes')
+}
+
+shadowJar.finalizedBy(reobfShadowJar)
+jar.finalizedBy(packageSources)
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact shadowJar
+            artifact packageSources
+            artifactId = project.archives_base_name
+        }
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+processResources {
+	doLast {
+        def jsonMinifyStart = System.currentTimeMillis()
+        def jsonMinified = 0
+        def jsonBytesSaved = 0
+        fileTree(dir: outputs.files.asPath, include: '**/*.json').each { 
+            File file = it
+            jsonMinified++
+            def oldLength = file.length()
+            file.text = JsonOutput.toJson(new JsonSlurper().parse(file))
+            jsonBytesSaved += oldLength - file.length()
+        }
+        println('Minified ' + jsonMinified + ' json files. Saved ' + jsonBytesSaved + ' bytes. Took ' + (System.currentTimeMillis() - jsonMinifyStart) + 'ms.')
+    }
+}
+publishing {
+    repositories {
+        maven {
+	      name = "cloudsmith"
+	      url = "https://maven.cloudsmith.io/geckolib3/geckolib/"
+	      def releasesRepoUrl = "https://maven.cloudsmith.io/geckolib3/geckolib/"
+	      def snapshotsRepoUrl = "https://maven.cloudsmith.io/geckolib3/geckolib/"
+	      url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+	      credentials {
+                def envUsername = System.getenv("cloudUsername")
+                def envPassword = System.getenv("cloudPassword")
+                username = envUsername == null ? findProperty("cloudUsername") : envUsername
+                password = envPassword == null ? findProperty("cloudPassword") : envPassword
+	      }
+	    }
+    }
+}
+
+if (file('key.properties').exists()) {
+    curseforge {
+        def curseProp = new Properties()
+        File secretPropsFile = file("key.properties")
+        curseProp.load(secretPropsFile.newInputStream())
+
+        project {
+            apiKey = curseProp.getProperty('curseKey')
+            id = "388172"
+            releaseType = "release"
+            changelogType = 'text'
+            changelog = file('changelog.txt')
+            addGameVersion("1.12.2")
+            addGameVersion("Forge")
+            addGameVersion("Java 8")
+        }
+    }
+}
