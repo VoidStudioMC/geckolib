@@ -1,12 +1,16 @@
 package software.bernie.geckolib3.file;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import org.apache.commons.io.IOUtils;
 
 import com.eliotlash.molang.MolangParser;
@@ -23,6 +27,8 @@ import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.util.json.JsonAnimationUtils;
 
 public class AnimationFileLoader {
+    
+    private static final Map<String, IResourcePack> packMap = FMLClientHandler.instance().getResourcePackMap();
 
 	public AnimationFile loadAllAnimations(MolangParser parser, ResourceLocation location, IResourceManager manager) {
 		AnimationFile animationFile = new AnimationFile();
@@ -53,9 +59,9 @@ public class AnimationFileLoader {
 	}
 
 	public static String getResourceAsString(ResourceLocation location, IResourceManager manager) {
-		try (InputStream inputStream = manager.getResource(location).getInputStream()) {
+		try (InputStream inputStream = packMap.get(location.getNamespace()).getInputStream(location)) {
 			return IOUtils.toString(inputStream, Charset.defaultCharset());
-		} catch (Exception e) {
+		} catch (IOException e) {
 			String message = "Couldn't load " + location;
 			GeckoLib.LOGGER.error(message, e);
 			throw new RuntimeException(new FileNotFoundException(location.toString()));
