@@ -27,8 +27,6 @@ import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.util.json.JsonAnimationUtils;
 
 public class AnimationFileLoader {
-    
-    private static final Map<String, IResourcePack> packMap = FMLClientHandler.instance().getResourcePackMap();
 
 	public AnimationFile loadAllAnimations(MolangParser parser, ResourceLocation location, IResourceManager manager) {
 		AnimationFile animationFile = new AnimationFile();
@@ -59,7 +57,7 @@ public class AnimationFileLoader {
 	}
 
 	public static String getResourceAsString(ResourceLocation location, IResourceManager manager) {
-		try (InputStream inputStream = packMap.get(location.getNamespace()).getInputStream(location)) {
+		try (InputStream inputStream = manager.getResource(location).getInputStream()) {
 			return IOUtils.toString(inputStream, Charset.defaultCharset());
 		} catch (IOException e) {
 			String message = "Couldn't load " + location;

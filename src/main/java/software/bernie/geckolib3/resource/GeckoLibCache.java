@@ -24,6 +24,8 @@ import net.minecraft.client.resources.LegacyV2Adapter;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.FMLFolderResourcePack;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.LoaderState;
 import software.bernie.geckolib3.GeckoLib;
 import software.bernie.geckolib3.file.AnimationFile;
 import software.bernie.geckolib3.file.AnimationFileLoader;
@@ -73,6 +75,11 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	@Override
 	public void onResourceManagerReload(IResourceManager resourceManager) {
+		if (!Loader.instance().hasReachedState(LoaderState.PREINITIALIZATION)) {
+			GeckoLib.LOGGER.info("Too early to reload GeckoLib cache, skipping...");
+			return;
+		}
+		GeckoLib.LOGGER.info("Reloading GeckoLib caches with {}", resourceManager);
 		HashMap<ResourceLocation, AnimationFile> tempAnimations = new HashMap<>();
 		HashMap<ResourceLocation, GeoModel> tempModels = new HashMap<>();
 		List<IResourcePack> packs = FMLClientHandler.instance().getResourcePackList();
