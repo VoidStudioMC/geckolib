@@ -4,7 +4,7 @@ public interface ILoopType {
 
 	boolean isRepeatingAfterEnd();
 	
-	static enum EDefaultLoopTypes implements ILoopType {
+	enum EDefaultLoopTypes implements ILoopType {
 		
 		LOOP(true),
 		PLAY_ONCE,
@@ -12,11 +12,11 @@ public interface ILoopType {
 		
 		private final boolean looping;
 		
-		private EDefaultLoopTypes(boolean looping) {
+		EDefaultLoopTypes(boolean looping) {
 			this.looping = looping;
 		}
 		
-		private EDefaultLoopTypes() {
+		EDefaultLoopTypes() {
 			this(false);
 		}
 

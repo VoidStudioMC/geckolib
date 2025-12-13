@@ -14,6 +14,7 @@ import software.bernie.example.registry.ItemRegistry;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.builder.ILoopType;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
@@ -22,7 +23,7 @@ import software.bernie.geckolib3.item.GeoArmorItem;
 
 //This is an example of animated armor. Make sure to read the comments thoroughly and also check out PotatoArmorRenderer.
 public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
-	private AnimationFactory factory = new AnimationFactory(this);
+	private final AnimationFactory factory = new AnimationFactory(this);
 
 	public PotatoArmorItem(ArmorMaterial materialIn, int renderIndexIn, EntityEquipmentSlot slot) {
 		super(materialIn, renderIndexIn, slot);
@@ -35,11 +36,11 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 		// This is all the extradata this event carries. The livingentity is the entity
 		// that's wearing the armor. The itemstack and equipmentslottype are self
 		// explanatory.
-		EntityLivingBase livingEntity = event.getExtraDataOfType(EntityLivingBase.class).get(0);
+		EntityLivingBase livingEntity = event.getExtraDataOfType(EntityLivingBase.class).getFirst();
 
 		// Always loop the animation but later on in this method we'll decide whether or
 		// not to actually play it
-		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.potato_armor.new", true));
+		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.potato_armor.new", ILoopType.EDefaultLoopTypes.LOOP));
 
 		// If the living entity is an armorstand just play the animation nonstop
 		if (livingEntity instanceof EntityArmorStand) {
@@ -72,7 +73,7 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 	// AnimationData
 	@Override
 	public void registerControllers(AnimationData data) {
-		data.addAnimationController(new AnimationController<PotatoArmorItem>(this, "controller", 20, this::predicate));
+		data.addAnimationController(new AnimationController<>(this, "controller", 20, this::predicate));
 	}
 
 	@Override

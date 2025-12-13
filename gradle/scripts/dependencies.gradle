@@ -5,16 +5,16 @@ repositories {
     // Other repositories described by default:
     // CleanroomMC: https://maven.cleanroommc.com
     maven {
-        name 'CurseMaven'
-        url 'https://curse.cleanroommc.com'
+        name = 'CurseMaven'
+        url = 'https://curse.cleanroommc.com'
     }
     maven {
-        name 'Geckolib Examples'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        name = 'Geckolib Examples'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
     }
     maven {
-        name 'Modrinth'
-        url 'https://api.modrinth.com/maven'
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
     }
     mavenLocal() // Must be last for caching to work
 }
