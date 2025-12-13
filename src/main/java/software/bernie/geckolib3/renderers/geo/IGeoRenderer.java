@@ -20,7 +20,7 @@ import software.bernie.geckolib3.model.provider.GeoModelProvider;
 import software.bernie.geckolib3.util.MatrixStack;
 
 public interface IGeoRenderer<T> {
-	public static MatrixStack MATRIX_STACK = new MatrixStack();
+	MatrixStack MATRIX_STACK = new MatrixStack();
 
 	default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue,
 			float alpha) {

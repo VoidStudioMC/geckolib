@@ -79,7 +79,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 			GeckoLib.LOGGER.info("Too early to reload GeckoLib cache, skipping...");
 			return;
 		}
-		GeckoLib.LOGGER.info("Reloading GeckoLib caches with {}", resourceManager);
+		GeckoLib.LOGGER.info("Reloading GeckoLib caches...");
 		HashMap<ResourceLocation, AnimationFile> tempAnimations = new HashMap<>();
 		HashMap<ResourceLocation, GeoModel> tempModels = new HashMap<>();
 		List<IResourcePack> packs = FMLClientHandler.instance().getResourcePackList();
