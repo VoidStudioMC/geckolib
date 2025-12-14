@@ -31,8 +31,8 @@ public abstract class GeoArmorRenderer<T extends ItemArmor & IAnimatable> extend
 
 	static {
 		AnimationController.addModelFetcher((IAnimatable object) -> {
-			if (object instanceof ItemArmor) {
-				GeoArmorRenderer renderer = renderers.get(object.getClass());
+			if (object instanceof ItemArmor itemArmor) {
+				GeoArmorRenderer renderer = renderers.get(itemArmor.getClass());
 				return renderer == null ? null : renderer.getGeoModelProvider();
 			}
 			return null;

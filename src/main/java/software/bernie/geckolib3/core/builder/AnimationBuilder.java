@@ -16,7 +16,7 @@ import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
  * <code>new AnimationBuilder().addAnimation("jump").addRepeatingAnimation("run", 5");</code>
  */
 public class AnimationBuilder {
-	private List<RawAnimation> animationList = new ArrayList<>();
+	private final List<RawAnimation> animationList = new ArrayList<>();
 
 	/**
 	 * Add a single animation to the queue and overrides the loop setting

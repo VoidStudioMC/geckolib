@@ -18,8 +18,8 @@ import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.util.VectorUtils;
 
 public class GeoBuilder implements IGeoBuilder {
-	private static Map<String, IGeoBuilder> moddedGeoBuilders = new HashMap<>();
-	private static IGeoBuilder defaultBuilder = new GeoBuilder();
+	private static final Map<String, IGeoBuilder> moddedGeoBuilders = new HashMap<>();
+	private static final IGeoBuilder defaultBuilder = new GeoBuilder();
 
 	public static void registerGeoBuilder(String modID, IGeoBuilder builder) {
 		moddedGeoBuilders.put(modID, builder);

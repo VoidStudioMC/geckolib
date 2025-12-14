@@ -23,9 +23,8 @@ public abstract class GeoItemRenderer<T extends Item & IAnimatable> extends Tile
 	// Register a model fetcher for this renderer
 	static {
 		AnimationController.addModelFetcher((IAnimatable object) -> {
-			if (object instanceof Item) {
-				Item item = (Item) object;
-				TileEntityItemStackRenderer renderer = item.getTileEntityItemStackRenderer();
+			if (object instanceof Item item) {
+                TileEntityItemStackRenderer renderer = item.getTileEntityItemStackRenderer();
 				if (renderer instanceof GeoItemRenderer) {
 					return (IAnimatableModel<Object>) ((GeoItemRenderer<?>) renderer).getGeoModelProvider();
 				}

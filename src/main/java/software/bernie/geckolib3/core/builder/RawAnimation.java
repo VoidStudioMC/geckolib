@@ -39,15 +39,11 @@ public class RawAnimation {
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
-		if (!(obj instanceof RawAnimation)) {
+		if (!(obj instanceof RawAnimation animation)) {
 			return false;
 		}
-		RawAnimation animation = (RawAnimation) obj;
-		if (animation.loopType == this.loopType && animation.animationName.equals(this.animationName)) {
-			return true;
-		}
-		return false;
-	}
+        return animation.loopType == this.loopType && animation.animationName.equals(this.animationName);
+    }
 
 	@Override
 	public int hashCode() {

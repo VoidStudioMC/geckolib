@@ -29,7 +29,7 @@ public class GeoModelLoader {
 			// rendered GeoModel
 			return GeoBuilder.getGeoBuilder(location.getNamespace()).constructGeoModel(rawGeometryTree);
 		} catch (Exception e) {
-			GeckoLib.LOGGER.error(String.format("Error parsing %S", location), e);
+			GeckoLib.LOGGER.error("Error parsing {}", location, e);
 			throw (new RuntimeException(e));
 		}
 	}

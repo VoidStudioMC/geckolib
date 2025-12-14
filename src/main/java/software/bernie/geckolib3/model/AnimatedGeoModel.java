@@ -49,7 +49,7 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 	}
 
 	@Override
-	public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent customPredicate) {
+	public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent<?> customPredicate) {
 		// Each animation has it's own collection of animations (called the
 		// EntityAnimationManager), which allows for multiple independent animations
 		AnimationData manager = entity.getFactory().getOrCreateAnimationData(uniqueID);
@@ -68,7 +68,7 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 		if (customPredicate == null) {
 			predicate = new AnimationEvent<T>(entity, 0, 0, (float) (manager.tick - lastGameTickTime), false, Collections.emptyList());
 		} else {
-			predicate = customPredicate;
+			predicate = (AnimationEvent<T>) customPredicate;
 		}
 
 		predicate.animationTick = seekTime;

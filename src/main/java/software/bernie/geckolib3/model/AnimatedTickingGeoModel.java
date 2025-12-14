@@ -11,7 +11,7 @@ import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.resource.GeckoLibCache;
 
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"unchecked" })
 public abstract class AnimatedTickingGeoModel<T extends IAnimatable & IAnimationTickable> extends AnimatedGeoModel<T> {
 	public AnimatedTickingGeoModel() {
 	}
@@ -21,7 +21,7 @@ public abstract class AnimatedTickingGeoModel<T extends IAnimatable & IAnimation
 	}
 
 	@Override
-	public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent customPredicate) {
+	public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent<?> customPredicate) {
 		// Each animation has it's own collection of animations (called the
 		// EntityAnimationManager), which allows for multiple independent animations
 		AnimationData manager = entity.getFactory().getOrCreateAnimationData(uniqueID);
@@ -39,9 +39,9 @@ public abstract class AnimatedTickingGeoModel<T extends IAnimatable & IAnimation
 
 		AnimationEvent<T> predicate;
 		if (customPredicate == null) {
-			predicate = new AnimationEvent<T>(entity, 0, 0, 0, false, Collections.emptyList());
+			predicate = new AnimationEvent<>(entity, 0, 0, 0, false, Collections.emptyList());
 		} else {
-			predicate = customPredicate;
+			predicate = (AnimationEvent<T>) customPredicate;
 		}
 
 		predicate.animationTick = seekTime;

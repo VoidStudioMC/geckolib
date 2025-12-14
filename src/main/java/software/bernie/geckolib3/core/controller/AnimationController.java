@@ -188,7 +188,7 @@ public class AnimationController<T extends IAnimatable> {
 	public void setAnimation(AnimationBuilder builder) {
 		IAnimatableModel<T> model = getModel(this.animatable);
 		if (model != null) {
-			if (builder == null || builder.getRawAnimationList().size() == 0) {
+			if (builder == null || builder.getRawAnimationList().isEmpty()) {
 				animationState = AnimationState.Stopped;
 			} else if (!builder.getRawAnimationList().equals(currentAnimationBuilder.getRawAnimationList())
 					|| needsAnimationReload) {
@@ -403,7 +403,7 @@ public class AnimationController<T extends IAnimatable> {
 
 		// This tests the animation predicate
 		PlayState playState = this.testAnimationPredicate(event);
-		if (playState == PlayState.STOP || (currentAnimation == null && animationQueue.size() == 0)) {
+		if (playState == PlayState.STOP || (currentAnimation == null && animationQueue.isEmpty())) {
 			// The animation should transition to the model's initial state
 			animationState = AnimationState.Stopped;
 			justStopped = true;
@@ -412,7 +412,7 @@ public class AnimationController<T extends IAnimatable> {
 		if (justStartedTransition && (shouldResetTick || justStopped)) {
 			justStopped = false;
 			tick = adjustTick(actualTick);
-		} else if (currentAnimation == null && this.animationQueue.size() != 0) {
+		} else if (currentAnimation == null) {
 			this.shouldResetTick = true;
 			this.animationState = AnimationState.Transitioning;
 			justStartedTransition = true;
@@ -440,7 +440,7 @@ public class AnimationController<T extends IAnimatable> {
 					BoneSnapshot boneSnapshot = this.boneSnapshots.get(boneAnimation.boneName);
 					Optional<IBone> first = modelRendererList.stream()
 							.filter(x -> x.getName().equals(boneAnimation.boneName)).findFirst();
-					if (!first.isPresent()) {
+					if (first.isEmpty()) {
 						if (crashWhenCantFindBone) {
 							throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
 						} else {
@@ -506,6 +506,7 @@ public class AnimationController<T extends IAnimatable> {
 		parser.setValue("query.anim_time", tick / 20);
 	}
 
+	@SuppressWarnings("unchecked")
 	private IAnimatableModel<T> getModel(T animatable) {
 		for (ModelFetcher<?> modelFetcher : modelFetchers) {
 			IAnimatableModel<T> model = (IAnimatableModel<T>) modelFetcher.apply(animatable);
@@ -716,7 +717,7 @@ public class AnimationController<T extends IAnimatable> {
 				return new KeyFrameLocation<>(frame, tick);
 			}
 		}
-		return new KeyFrameLocation<>(frames.get(frames.size() - 1), ageInTicks);
+		return new KeyFrameLocation<>(frames.getLast(), ageInTicks);
 	}
 
 	private void resetEventKeyFrames() {
