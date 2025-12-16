@@ -6,25 +6,24 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum FormatVersion {
-	VERSION_1_12_0, VERSION_1_14_0;
+	VERSION_1_12_0, VERSION_1_12_2, VERSION_1_14_0;
 
 	@JsonValue
 	public String toValue() {
-		switch (this) {
-		case VERSION_1_12_0:
-			return "1.12.0";
-		case VERSION_1_14_0:
-			return "1.14.0";
-		}
-		return null;
-	}
+        return switch (this) {
+            case VERSION_1_12_0 -> "1.12.0";
+			case VERSION_1_12_2 -> "1.12.2";
+            case VERSION_1_14_0 -> "1.14.0";
+        };
+    }
 
 	@JsonCreator
 	public static FormatVersion forValue(String value) throws IOException {
-		if (value.equals("1.12.0"))
-			return VERSION_1_12_0;
-		if (value.equals("1.14.0"))
-			return VERSION_1_14_0;
-		throw new IOException("Cannot deserialize FormatVersion");
-	}
+		return switch (value) {
+            case "1.12.0" -> VERSION_1_12_0;
+            case "1.12.2" -> VERSION_1_12_2;
+            case "1.14.0" -> VERSION_1_14_0;
+            default -> throw new IOException("Cannot deserialize FormatVersion");
+        };
+    }
 }
