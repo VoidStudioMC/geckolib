@@ -15,7 +15,7 @@ import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
 
 public class AnimationData {
 	private HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection;
-	private HashMap<String, AnimationController> animationControllers = new HashMap<>();
+	private final HashMap<String, AnimationController> animationControllers = new HashMap<>();
 	public double tick;
 	public boolean isFirstTick = true;
 	private double resetTickLength = 1;

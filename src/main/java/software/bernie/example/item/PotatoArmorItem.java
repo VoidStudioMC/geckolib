@@ -2,6 +2,7 @@ package software.bernie.example.item;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -49,10 +50,9 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 
 		// The entity is a player, so we want to only play if the player is wearing the
 		// full set of armor
-		else if (livingEntity instanceof EntityPlayerSP) {
-			EntityPlayerSP client = (EntityPlayerSP) livingEntity;
+		else if (livingEntity instanceof EntityPlayerSP client) {
 
-			// Get all the equipment, aka the armor, currently held item, and offhand item
+            // Get all the equipment, aka the armor, currently held item, and offhand item
 			List<Item> equipmentList = new ArrayList<>();
 			client.getEquipmentAndArmor().forEach((x) -> equipmentList.add(x.getItem()));
 
@@ -62,7 +62,7 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 
 			// Make sure the player is wearing all the armor. If they are, continue playing
 			// the animation, otherwise stop
-			boolean isWearingAll = armorList.containsAll(Arrays.asList(ItemRegistry.POTATO_BOOTS,
+			boolean isWearingAll = new HashSet<>(armorList).containsAll(Arrays.asList(ItemRegistry.POTATO_BOOTS,
 					ItemRegistry.POTATO_LEGGINGS, ItemRegistry.POTATO_CHEST, ItemRegistry.POTATO_HEAD));
 			return isWearingAll ? PlayState.CONTINUE : PlayState.STOP;
 		}

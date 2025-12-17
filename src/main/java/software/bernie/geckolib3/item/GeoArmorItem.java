@@ -26,7 +26,7 @@ public abstract class GeoArmorItem extends ItemArmor {
 		Class<? extends ItemArmor> clazz = this.getClass();
 		GeoArmorRenderer renderer = GeoArmorRenderer.getRenderer(clazz);
 		renderer.setCurrentItem(entityLiving, itemStack, armorSlot);
-		renderer.applyEntityStats(_default).applySlot(armorSlot);
+		renderer = renderer.applyEntityStats(_default).applySlot(armorSlot);
 		return renderer;
 	}
 

@@ -27,7 +27,7 @@ import software.bernie.geckolib3.util.GeoUtils;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class GeoArmorRenderer<T extends ItemArmor & IAnimatable> extends ModelBiped
 		implements IGeoRenderer<T> {
-	private static Map<Class<? extends ItemArmor>, GeoArmorRenderer> renderers = new ConcurrentHashMap<>();
+	private static final Map<Class<? extends ItemArmor>, GeoArmorRenderer> renderers = new ConcurrentHashMap<>();
 
 	static {
 		AnimationController.addModelFetcher((IAnimatable object) -> {
@@ -103,7 +103,7 @@ public abstract class GeoArmorRenderer<T extends ItemArmor & IAnimatable> extend
 			IBone rightBootBone = this.modelProvider.getBone(this.rightBootBone);
 			IBone leftBootBone = this.modelProvider.getBone(this.leftBootBone);
 			try {
-				headBone.setPositionY(headBone.getPositionY() - 1F);
+				headBone.setPositionY(headBone.getPositionY() - 3.5F);
 				bodyBone.setPositionZ(bodyBone.getPositionX() - 0.4F);
 				bodyBone.setPositionY(bodyBone.getPositionX() - 3.5F);
 				rightArmBone.setPositionY(bodyBone.getPositionX() - 3);
