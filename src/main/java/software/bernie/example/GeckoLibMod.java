@@ -37,7 +37,7 @@ import software.bernie.geckolib3.GeckoLib;
 import software.bernie.geckolib3.renderers.geo.GeoArmorRenderer;
 import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
-@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION, dependencies = "required-after:cleanroom@[0.3.28-alpha,);")
+@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION, dependencies = "required-after:cleanroom@[0.3.31-alpha,);")
 public class GeckoLibMod {
 	private static CreativeTabs geckolibItemGroup;
 

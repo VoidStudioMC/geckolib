@@ -26,7 +26,6 @@ public interface IGeoRenderer<T> {
 			float alpha) {
 		GlStateManager.disableCull();
 		GlStateManager.enableRescaleNormal();
-		GlStateManager.disableLighting();
 		renderEarly(animatable, partialTicks, red, green, blue, alpha);
 
 		renderLate(animatable, partialTicks, red, green, blue, alpha);
@@ -45,7 +44,6 @@ public interface IGeoRenderer<T> {
 		renderAfter(animatable, partialTicks, red, green, blue, alpha);
 		GlStateManager.disableRescaleNormal();
 		GlStateManager.enableCull();
-		GlStateManager.enableLighting();
 	}
 
 	default void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue,
