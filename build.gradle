@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
-    id 'com.gradleup.shadow' version '9.2.2'
+    id 'com.gradleup.shadow' version '9.3.0'
     id 'xyz.wagyourtail.unimined' version '1.4.9-kappa'
     id 'net.kyori.blossom'  version '2.1.0'
 }
@@ -47,8 +47,10 @@ java {
 configurations {
     embed
     contain
+    shade
     implementation.extendsFrom(embed)
     implementation.extendsFrom(contain)
+    implementation.extendsFrom(shade)
     modCompileOnly
     compileOnly.extendsFrom(modCompileOnly)
     modRuntimeOnly
@@ -205,7 +207,7 @@ jar {
 
 
 shadowJar {
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shade]
     exclude('META-INF/services/**')
     relocate 'com.eliotlash', 'software.bernie.shadowed.eliotlash'
     relocate 'com.fasterxml', 'software.bernie.shadowed.fasterxml'

@@ -2,7 +2,6 @@ package software.bernie.geckolib3.resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -14,7 +13,6 @@ import java.util.zip.ZipFile;
 
 import com.eliotlash.molang.MolangParser;
 
-import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.client.resources.FileResourcePack;
 import net.minecraft.client.resources.FolderResourcePack;
 import net.minecraft.client.resources.IResourceManager;

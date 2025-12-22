@@ -26,11 +26,11 @@ dependencies {
     }
 
 
-    shadow 'com.eliotlash.mclib:mclib:20'
-    shadow 'com.eliotlash.molang:molang:19'
+    shade 'com.eliotlash.mclib:mclib:20'
+    shade 'com.eliotlash.molang:molang:19'
 
-    shadow 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
-    shadow 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1'
+    shade 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    shade 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1'
 
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.1'
