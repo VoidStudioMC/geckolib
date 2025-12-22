@@ -5,12 +5,12 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.0'
     id 'xyz.wagyourtail.unimined' version '1.4.9-kappa'
     id 'net.kyori.blossom'  version '2.1.0'
+    id 'com.palantir.git-version' version '4.2.0'
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
 
 // Early Assertions
-assertProperty 'mod_version'
 assertProperty 'root_package'
 assertProperty 'mod_id'
 assertProperty 'mod_name'
@@ -24,7 +24,7 @@ setDefaultProperty 'generate_javadocs_jar', true, false
 setDefaultProperty 'minecraft_username', true, 'Developer'
 setDefaultProperty 'extra_jvm_args', false, ''
 
-version = propertyString('mod_version')
+version = versionDetails().lastTag
 group = propertyString('root_package')
 
 base {
@@ -128,7 +128,7 @@ processResources {
 
     inputs.property 'mod_id', propertyString('mod_id')
     inputs.property 'mod_name', propertyString('mod_name')
-    inputs.property 'mod_version', propertyString('mod_version')
+    inputs.property 'mod_version', version
     inputs.property 'mod_description', propertyString('mod_description')
     inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
     inputs.property 'mod_credits', propertyString('mod_credits')
@@ -142,7 +142,7 @@ processResources {
         fcd.expand(
                 'mod_id': propertyString('mod_id'),
                 'mod_name': propertyString('mod_name'),
-                'mod_version': propertyString('mod_version'),
+                'mod_version': version,
                 'mod_description': propertyString('mod_description'),
                 'mod_authors': "${propertyStringList('mod_authors', ',').join(', ')}",
                 'mod_credits': propertyString('mod_credits'),
@@ -161,7 +161,7 @@ sourceSets {
             javaSources {
                 property('mod_id', propertyString('mod_id'))
                 property('mod_name', propertyString('mod_name'))
-                property('mod_version', propertyString('mod_version'))
+                property('mod_version', version)
                 property('package', "${root_package}.${mod_id}")
             }
         }
