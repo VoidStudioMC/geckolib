@@ -206,10 +206,13 @@ jar {
 
 shadowJar {
     configurations = [project.configurations.shadow]
+    exclude('META-INF/services/**')
+    relocate 'com.eliotlash', 'software.bernie.shadowed.eliotlash'
+    relocate 'com.fasterxml', 'software.bernie.shadowed.fasterxml'
     archiveClassifier = "shadow"
 }
 
-remapJar {
+remapShadowJar {
     doFirst {
         logging.captureStandardOutput LogLevel.INFO
     }
