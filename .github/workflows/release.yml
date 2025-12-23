@@ -31,7 +31,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1.20.0
         with:
-          artifacts: "build/libs/!*-shadow.jar"
+          artifacts: "build/libs/!(*-@(sources|shadow)).jar", "build/libs/*-@(sources).jar"
           generateReleaseNotes: true
 
       - name: Get Changes between Tags
