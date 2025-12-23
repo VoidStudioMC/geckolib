@@ -26,6 +26,8 @@ jobs:
       run: chmod +x ./gradlew
     - name: Execute Gradle build
       run: ./gradlew build
+    - name: Remove unwanted jar
+      run: rm build/libs/*-shadow.jar
         
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v5
