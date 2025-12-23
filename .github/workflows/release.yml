@@ -31,7 +31,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1.20.0
         with:
-          artifacts: "build/libs/*"
+          artifacts: "build/libs/!*-shadow.jar"
           generateReleaseNotes: true
 
       - name: Get Changes between Tags
@@ -51,7 +51,8 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: |
-            build/libs/SauariaLib 3-${{ steps.changes.outputs.tag }}.jar
+            build/libs/!(*-@(sources|shadow)).jar
+            build/libs/*-@(sources).jar
           loaders: forge
           game-versions: 1.12.2
           java: |
