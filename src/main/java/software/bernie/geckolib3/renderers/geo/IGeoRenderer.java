@@ -30,6 +30,8 @@ public interface IGeoRenderer<T> {
 
 		renderLate(animatable, partialTicks, red, green, blue, alpha);
 
+		GlStateManager.enableBlend();
+		GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		BufferBuilder builder = Tessellator.getInstance().getBuffer();
 
 		builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
@@ -41,6 +43,7 @@ public interface IGeoRenderer<T> {
 
 		Tessellator.getInstance().draw();
 
+		GlStateManager.disableBlend();
 		renderAfter(animatable, partialTicks, red, green, blue, alpha);
 		GlStateManager.disableRescaleNormal();
 	}
