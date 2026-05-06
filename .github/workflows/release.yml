@@ -39,7 +39,7 @@ jobs:
         id: changes
         uses: simbo/changes-between-tags-action@v1
         with:
-          tag-pattern: '^v?[0-9]+\.[0-9]+\.[0-9]+$'
+          tag-pattern: '^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta))?$'
 
       - uses: Kir-Antipov/mc-publish@v3.3.0
         with:
