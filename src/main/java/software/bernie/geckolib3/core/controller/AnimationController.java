@@ -494,6 +494,13 @@ public class AnimationController<T extends IAnimatable> {
 						boneAnimationQueue.scaleZQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
 								boneSnapshot.scaleValueZ, zPoint.animationStartValue));
 					}
+
+					List<KeyFrame<IValue>> opacityKeyFrames = boneAnimation.opacityKeyFrames;
+					if (opacityKeyFrames != null && !opacityKeyFrames.isEmpty()) {
+						AnimationPoint opacityPoint = getAnimationPointAtTick(opacityKeyFrames, 0, false, null);
+						boneAnimationQueue.opacityQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.opacityValue, opacityPoint.animationStartValue));
+					}
 				}
 			}
 		} else if (getAnimationState() == AnimationState.Running) {
@@ -609,6 +616,10 @@ public class AnimationController<T extends IAnimatable> {
 						.add(getAnimationPointAtTick(scaleKeyFrames.yKeyFrames, tick, false, Axis.Y));
 				boneAnimationQueue.scaleZQueue
 						.add(getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, tick, false, Axis.Z));
+			}
+
+			if (boneAnimation.opacityKeyFrames != null && !boneAnimation.opacityKeyFrames.isEmpty()) {
+				boneAnimationQueue.opacityQueue.add(getAnimationPointAtTick(boneAnimation.opacityKeyFrames, tick, false, null));
 			}
 		}
 

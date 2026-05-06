@@ -88,6 +88,8 @@ public class AnimationProcessor<T extends IAnimatable> {
 				AnimationPoint sYPoint = boneAnimation.scaleYQueue.poll();
 				AnimationPoint sZPoint = boneAnimation.scaleZQueue.poll();
 
+				AnimationPoint oPoint = boneAnimation.opacityQueue.poll();
+
 				// If there's any rotation points for this bone
 				DirtyTracker dirtyTracker = modelTracker.get(bone.getName());
 				if (dirtyTracker == null) {
@@ -134,6 +136,14 @@ public class AnimationProcessor<T extends IAnimatable> {
 					snapshot.isCurrentlyRunningScaleAnimation = true;
 
 					dirtyTracker.hasScaleChanged = true;
+				}
+
+				if (oPoint != null) {
+					bone.setAlpha(
+							(float) MathUtil.lerpValues(oPoint, controller.easingType, controller.customEasingMethod));
+					snapshot.opacityValue = bone.getAlpha();
+					snapshot.isCurrentlyRunningOpacityAnimation = true;
+					dirtyTracker.hasOpacityChanged = true;
 				}
 			}
 		}
@@ -221,6 +231,22 @@ public class AnimationProcessor<T extends IAnimatable> {
 					saveSnapshot.scaleValueZ = model.getScaleZ();
 				}
 			}
+			if (!tracker.getValue().hasOpacityChanged) {
+				if (saveSnapshot.isCurrentlyRunningOpacityAnimation) {
+					saveSnapshot.mostRecentResetOpacityTick = (float) seekTime;
+					saveSnapshot.isCurrentlyRunningOpacityAnimation = false;
+				}
+
+				double percentageReset = Math
+						.min((seekTime - saveSnapshot.mostRecentResetOpacityTick) / resetTickLength, 1);
+
+				model.setAlpha((float) MathUtil.lerpValues(percentageReset, saveSnapshot.opacityValue,
+						initialSnapshot.opacityValue));
+
+				if (percentageReset >= 1) {
+					saveSnapshot.opacityValue = model.getAlpha();
+				}
+			}
 		}
 		manager.isFirstTick = false;
 	}
@@ -228,7 +254,7 @@ public class AnimationProcessor<T extends IAnimatable> {
 	private HashMap<String, DirtyTracker> createNewDirtyTracker() {
 		HashMap<String, DirtyTracker> tracker = new HashMap<>();
 		for (IBone bone : modelRendererList) {
-			tracker.put(bone.getName(), new DirtyTracker(false, false, false, bone));
+			tracker.put(bone.getName(), new DirtyTracker(false, false, false, false, bone));
 		}
 		return tracker;
 	}

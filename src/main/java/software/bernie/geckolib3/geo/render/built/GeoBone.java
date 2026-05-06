@@ -25,6 +25,8 @@ public class GeoBone implements IBone {
 	// ¯\_(ツ)_/¯
 	public Boolean reset;
 
+	private float alpha = 1;
+
 	private float scaleX = 1;
 	private float scaleY = 1;
 	private float scaleZ = 1;
@@ -95,6 +97,16 @@ public class GeoBone implements IBone {
 	@Override
 	public float getPositionZ() {
 		return positionZ;
+	}
+
+	@Override
+	public float getAlpha() {
+		return alpha;
+	}
+
+	@Override
+	public void setAlpha(float value) {
+		this.alpha = value;
 	}
 
 	@Override

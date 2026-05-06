@@ -262,6 +262,11 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
 		return this.layerRenderers.add(layer);
 	}
 
+    @Deprecated
+    protected boolean setDoRenderBrightness(T entityLivingBaseIn, float partialTicks) {
+        return RenderHurtColor.set(entityLivingBaseIn, partialTicks);
+    }
+
 	protected void renderLeash(EntityLiving entityLivingIn, double x, double y, double z, float entityYaw,
 			float partialTicks) {
 		Entity entity = entityLivingIn.getLeashHolder();

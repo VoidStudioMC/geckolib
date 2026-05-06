@@ -18,6 +18,7 @@ public class BoneAnimationQueue {
 	public AnimationPointQueue scaleXQueue = new AnimationPointQueue();
 	public AnimationPointQueue scaleYQueue = new AnimationPointQueue();
 	public AnimationPointQueue scaleZQueue = new AnimationPointQueue();
+	public AnimationPointQueue opacityQueue = new AnimationPointQueue();
 
 	public BoneAnimationQueue(IBone bone) {
 		this.bone = bone;

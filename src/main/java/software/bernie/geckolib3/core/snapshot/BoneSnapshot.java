@@ -21,6 +21,8 @@ public class BoneSnapshot {
 		scaleValueY = modelRenderer.getScaleY();
 		scaleValueZ = modelRenderer.getScaleZ();
 
+		opacityValue = modelRenderer.getAlpha();
+
 		this.modelRenderer = modelRenderer;
 		this.name = modelRenderer.getName();
 	}
@@ -44,6 +46,8 @@ public class BoneSnapshot {
 		scaleValueY = modelRenderer.getScaleY();
 		scaleValueZ = modelRenderer.getScaleZ();
 
+		opacityValue = modelRenderer.getAlpha();
+
 		this.modelRenderer = modelRenderer;
 		this.name = modelRenderer.getName();
 	}
@@ -60,6 +64,8 @@ public class BoneSnapshot {
 		rotationValueX = snapshot.rotationValueX;
 		rotationValueY = snapshot.rotationValueY;
 		rotationValueZ = snapshot.rotationValueZ;
+
+		opacityValue = snapshot.opacityValue;
 		this.modelRenderer = snapshot.modelRenderer;
 		this.name = snapshot.name;
 	}
@@ -79,13 +85,17 @@ public class BoneSnapshot {
 	public float rotationValueY;
 	public float rotationValueZ;
 
+	public float opacityValue;
+
 	public float mostRecentResetRotationTick = 0;
 	public float mostRecentResetPositionTick = 0;
 	public float mostRecentResetScaleTick = 0;
+	public float mostRecentResetOpacityTick = 0;
 
 	public boolean isCurrentlyRunningRotationAnimation = true;
 	public boolean isCurrentlyRunningPositionAnimation = true;
 	public boolean isCurrentlyRunningScaleAnimation = true;
+	public boolean isCurrentlyRunningOpacityAnimation = true;
 
 	@Override
 	public boolean equals(Object o) {

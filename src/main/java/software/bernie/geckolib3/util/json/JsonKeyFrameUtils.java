@@ -28,6 +28,10 @@ import software.bernie.geckolib3.util.AnimationUtils;
 /**
  * Helper class to convert json to keyframes
  */
+
+/**
+ * Helper class to convert json to keyframes
+ */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class JsonKeyFrameUtils {
 	private static VectorKeyFrameList<KeyFrame<IValue>> convertJson(List<Map.Entry<String, JsonElement>> element,
@@ -173,6 +177,55 @@ public class JsonKeyFrameUtils {
 			throws NumberFormatException, MolangException {
 		VectorKeyFrameList<KeyFrame<IValue>> frameList = convertJson(element, true, parser);
 		return new VectorKeyFrameList(frameList.xKeyFrames, frameList.yKeyFrames, frameList.zKeyFrames);
+	}
+
+	public static List<KeyFrame<IValue>> convertJsonToOpacityKeyFrames(
+			List<Map.Entry<String, JsonElement>> element, MolangParser parser)
+			throws NumberFormatException, MolangException {
+		IValue previousValue = null;
+		List<KeyFrame<IValue>> keyFrames = new ArrayList();
+
+		for (int i = 0; i < element.size(); i++) {
+			Map.Entry<String, JsonElement> keyframe = element.get(i);
+			Map.Entry<String, JsonElement> previousKeyFrame = i == 0 ? null : element.get(i - 1);
+
+			Double previousKeyFrameLocation = previousKeyFrame == null ? 0
+					: Double.parseDouble(previousKeyFrame.getKey());
+			Double currentKeyFrameLocation = NumberUtils.isCreatable(keyframe.getKey())
+					? Double.parseDouble(keyframe.getKey())
+					: 0;
+			Double animationTimeDifference = currentKeyFrameLocation - previousKeyFrameLocation;
+
+			JsonElement valueElement;
+			if (keyframe.getValue().isJsonObject()) {
+				JsonObject obj = keyframe.getValue().getAsJsonObject();
+				valueElement = obj.has("vector") ? obj.get("vector") : obj;
+			} else {
+				valueElement = keyframe.getValue();
+			}
+			IValue value = parseExpression(parser, valueElement);
+
+			KeyFrame<IValue> keyFrame;
+			if (keyframe.getValue().isJsonObject() && hasEasingType(keyframe.getValue())) {
+				EasingType easingType = getEasingType(keyframe.getValue());
+				if (hasEasingArgs(keyframe.getValue())) {
+					List<IValue> easingArgs = getEasingArgs(keyframe.getValue());
+					keyFrame = new KeyFrame(AnimationUtils.convertSecondsToTicks(animationTimeDifference),
+							i == 0 ? value : previousValue, value, easingType, easingArgs);
+				} else {
+					keyFrame = new KeyFrame(AnimationUtils.convertSecondsToTicks(animationTimeDifference),
+							i == 0 ? value : previousValue, value, easingType);
+				}
+			} else {
+				keyFrame = new KeyFrame(AnimationUtils.convertSecondsToTicks(animationTimeDifference),
+						i == 0 ? value : previousValue, value);
+			}
+
+			previousValue = value;
+			keyFrames.add(keyFrame);
+		}
+
+		return keyFrames;
 	}
 
 	public static IValue parseExpression(MolangParser parser, JsonElement element) throws MolangException {

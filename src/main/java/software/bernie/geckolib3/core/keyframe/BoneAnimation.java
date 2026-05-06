@@ -5,6 +5,8 @@
 
 package software.bernie.geckolib3.core.keyframe;
 
+import java.util.List;
+
 import com.eliotlash.mclib.math.IValue;
 
 public class BoneAnimation {
@@ -12,4 +14,5 @@ public class BoneAnimation {
 	public VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames;
 	public VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames;
 	public VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames;
+	public List<KeyFrame<IValue>> opacityKeyFrames;
 }

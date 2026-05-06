@@ -12,11 +12,14 @@ public class DirtyTracker {
 	public boolean hasScaleChanged;
 	public boolean hasPositionChanged;
 	public boolean hasRotationChanged;
+	public boolean hasOpacityChanged;
 
-	public DirtyTracker(boolean hasScaleChanged, boolean hasPositionChanged, boolean hasRotationChanged, IBone model) {
+	public DirtyTracker(boolean hasScaleChanged, boolean hasPositionChanged, boolean hasRotationChanged,
+			boolean hasOpacityChanged, IBone model) {
 		this.hasScaleChanged = hasScaleChanged;
 		this.hasPositionChanged = hasPositionChanged;
 		this.hasRotationChanged = hasRotationChanged;
+		this.hasOpacityChanged = hasOpacityChanged;
 		this.model = model;
 	}
 }

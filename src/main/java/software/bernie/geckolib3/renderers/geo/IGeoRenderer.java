@@ -34,15 +34,23 @@ public interface IGeoRenderer<T> {
 		GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		BufferBuilder builder = Tessellator.getInstance().getBuffer();
 
+		// Pass 1: Render opaque bones with depth writing
+		GlStateManager.depthMask(true);
 		builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-
-		// Render all top level bones
 		for (GeoBone group : model.topLevelBones) {
-			renderRecursively(builder, group, red, green, blue, alpha);
+			renderRecursively(builder, group, red, green, blue, alpha, true);
 		}
-
 		Tessellator.getInstance().draw();
 
+		// Pass 2: Render transparent bones without depth writing so they don't occlude
+		GlStateManager.depthMask(false);
+		builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+		for (GeoBone group : model.topLevelBones) {
+			renderRecursively(builder, group, red, green, blue, alpha, false);
+		}
+		Tessellator.getInstance().draw();
+
+		GlStateManager.depthMask(true);
 		GlStateManager.disableBlend();
 		renderAfter(animatable, partialTicks, red, green, blue, alpha);
 		GlStateManager.disableRescaleNormal();
@@ -50,6 +58,16 @@ public interface IGeoRenderer<T> {
 
 	default void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue,
 			float alpha) {
+		renderRecursively(builder, bone, red, green, blue, alpha, true);
+	}
+
+	default void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue,
+			float alpha, boolean opaquePass) {
+		float boneAlpha = alpha * bone.getAlpha();
+		if (boneAlpha <= 0) {
+			return;
+		}
+
 		MATRIX_STACK.push();
 
 		MATRIX_STACK.translate(bone);
@@ -58,18 +76,21 @@ public interface IGeoRenderer<T> {
 		MATRIX_STACK.scale(bone);
 		MATRIX_STACK.moveBackFromPivot(bone);
 
-		if (!bone.isHidden()) {
+		boolean isTransparent = boneAlpha < 1;
+		boolean renderCubes = opaquePass != isTransparent;
+
+		if (renderCubes && !bone.isHidden()) {
 			for (GeoCube cube : bone.childCubes) {
 				MATRIX_STACK.push();
 				GlStateManager.pushMatrix();
-				renderCube(builder, cube, red, green, blue, alpha);
+				renderCube(builder, cube, red, green, blue, boneAlpha);
 				GlStateManager.popMatrix();
 				MATRIX_STACK.pop();
 			}
 		}
 		if (!bone.childBonesAreHiddenToo()) {
 			for (GeoBone childBone : bone.childBones) {
-				renderRecursively(builder, childBone, red, green, blue, alpha);
+				renderRecursively(builder, childBone, red, green, blue, boneAlpha, opaquePass);
 			}
 		}
 

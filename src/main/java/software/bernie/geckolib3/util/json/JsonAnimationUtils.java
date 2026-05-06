@@ -26,6 +26,7 @@ import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
 import software.bernie.geckolib3.core.keyframe.BoneAnimation;
 import software.bernie.geckolib3.core.keyframe.EventKeyFrame;
+import software.bernie.geckolib3.core.keyframe.KeyFrame;
 import software.bernie.geckolib3.core.keyframe.ParticleEventKeyFrame;
 import software.bernie.geckolib3.core.keyframe.VectorKeyFrameList;
 import software.bernie.geckolib3.util.AnimationUtils;
@@ -103,6 +104,24 @@ public class JsonAnimationUtils {
 			return ImmutableSet.of(new AbstractMap.SimpleEntry("0", jsonElement));
 		}
 		return getObjectListAsArray(positionObject.getAsJsonObject());
+	}
+
+	/**
+	 * Gets opacity key frames.
+	 *
+	 * @param json The "bones" json object
+	 * @return The set of map entries where the string is the keyframe time and the
+	 *         JsonElement is the opacity value.
+	 */
+	public static Set<Map.Entry<String, JsonElement>> getOpacityKeyFrames(JsonObject json) {
+		JsonElement opacityObject = json.get("opacity");
+		if (opacityObject == null) {
+			return null;
+		}
+		if (opacityObject.isJsonPrimitive()) {
+			return ImmutableSet.of(new AbstractMap.SimpleEntry("0", opacityObject));
+		}
+		return getObjectListAsArray(opacityObject.getAsJsonObject());
 	}
 
 	/**
@@ -295,6 +314,17 @@ public class JsonAnimationUtils {
 				boneAnimation.rotationKeyFrames = new VectorKeyFrameList<>();
 			}
 
+			try {
+				Set<Map.Entry<String, JsonElement>> opacityKeyFramesJson = getOpacityKeyFrames(boneJsonObj);
+				if (opacityKeyFramesJson != null) {
+					boneAnimation.opacityKeyFrames = JsonKeyFrameUtils
+							.convertJsonToOpacityKeyFrames(new ArrayList<>(opacityKeyFramesJson), parser);
+				}
+			} catch (Exception e) {
+				// No opacity key frames found
+				boneAnimation.opacityKeyFrames = null;
+			}
+
 			animation.boneAnimations.add(boneAnimation);
 		}
 		if (animation.animationLength == null) {
@@ -310,7 +340,13 @@ public class JsonAnimationUtils {
 			double xKeyframeTime = animation.rotationKeyFrames.getLastKeyframeTime();
 			double yKeyframeTime = animation.positionKeyFrames.getLastKeyframeTime();
 			double zKeyframeTime = animation.scaleKeyFrames.getLastKeyframeTime();
-			longestLength = maxAll(longestLength, xKeyframeTime, yKeyframeTime, zKeyframeTime);
+			double opacityKeyframeTime = 0;
+			if (animation.opacityKeyFrames != null) {
+				for (KeyFrame<IValue> frame : animation.opacityKeyFrames) {
+					opacityKeyframeTime += frame.getLength();
+				}
+			}
+			longestLength = maxAll(longestLength, xKeyframeTime, yKeyframeTime, zKeyframeTime, opacityKeyframeTime);
 		}
 		return longestLength == 0 ? Double.MAX_VALUE : longestLength;
 	}

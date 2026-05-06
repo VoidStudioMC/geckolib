@@ -39,6 +39,10 @@ public interface IBone {
 
 	void setScaleZ(float value);
 
+	float getAlpha();
+
+	void setAlpha(float value);
+
 	void setPivotX(float value);
 
 	void setPivotY(float value);
