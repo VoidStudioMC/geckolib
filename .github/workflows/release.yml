@@ -39,8 +39,7 @@ jobs:
         id: changes
         uses: simbo/changes-between-tags-action@v1
         with: 
-          tag-pattern: "^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-          validate-tag: false
+          tag-pattern: "^0|[1-9]\d*\.0|[1-9]\d*\.0|[1-9]\d*(?:-(?:alpha|beta))?$"
 
       - uses: Kir-Antipov/mc-publish@v3.3.0
         with:
