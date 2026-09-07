@@ -686,47 +686,45 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 			}
 		}
 
-		//if (soundListener != null || particleListener != null || customInstructionListener != null) {
+		if (soundListener != null) {
 			for (EventKeyFrame<String> soundKeyFrame : currentAnimation.soundKeyFrames) {
 				if (!this.executedKeyFrames.contains(soundKeyFrame) && tick >= soundKeyFrame.getStartTick()) {
 					SoundKeyframeEvent<T> event = new SoundKeyframeEvent<>(this.animatable, tick,
 							soundKeyFrame.getEventData(), this);
-					if (soundListener != null) {
-						soundListener.playSound(event);
-					}
+					soundListener.playSound(event);
 					this.executedKeyFrames.add(soundKeyFrame);
 				}
 			}
+		}
 
-			for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
-				if (!this.executedKeyFrames.contains(particleEventKeyFrame)
-						&& tick >= particleEventKeyFrame.getStartTick() || hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
-					ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
-							particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
-							this);
-					processBedrockParticleEvent(this, event);
+		for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
+			if (!this.executedKeyFrames.contains(particleEventKeyFrame)
+					&& tick >= particleEventKeyFrame.getStartTick() || hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
+				ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
+						particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
+						this);
+				processBedrockParticleEvent(this, event);
 
-					if (particleListener != null) {
-						particleListener.summonParticle(event);
-					}
-
-					this.executedKeyFrames.add(particleEventKeyFrame);
+				if (particleListener != null) {
+					particleListener.summonParticle(event);
 				}
-			}
 
+				this.executedKeyFrames.add(particleEventKeyFrame);
+			}
+		}
+
+		if (customInstructionListener != null) {
 			for (EventKeyFrame<String> customInstructionKeyFrame : currentAnimation.customInstructionKeyframes) {
 				if (!this.executedKeyFrames.contains(customInstructionKeyFrame)
 						&& tick >= customInstructionKeyFrame.getStartTick()) {
 					CustomInstructionKeyframeEvent<T> event = new CustomInstructionKeyframeEvent<>(this.animatable,
 							tick, customInstructionKeyFrame.getEventData(), this);
-					if (customInstructionListener != null) {
-						customInstructionListener.executeInstruction(event);
-					}
+					customInstructionListener.executeInstruction(event);
 
 					this.executedKeyFrames.add(customInstructionKeyFrame);
 				}
 			}
-		//}
+		}
 
 		if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.Transitioning) {
 			this.currentAnimation = animationQueue.poll();
