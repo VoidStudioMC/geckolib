@@ -24,7 +24,7 @@ setDefaultProperty 'generate_javadocs_jar', true, false
 setDefaultProperty 'minecraft_username', true, 'Developer'
 setDefaultProperty 'extra_jvm_args', false, ''
 
-version = versionDetails().lastTag
+version = "3.2.1"
 group = propertyString('root_package')
 
 base {
