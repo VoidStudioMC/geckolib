@@ -34,12 +34,20 @@ import software.bernie.example.entity.ReplacedCreeperEntity;
 import software.bernie.example.item.PotatoArmorItem;
 import software.bernie.example.registry.ItemRegistry;
 import software.bernie.geckolib3.GeckoLib;
+import software.bernie.example.client.renderer.MagicTorchTileRenderer;
+import software.bernie.example.client.renderer.ParticleExampleEntityRenderer;
+import software.bernie.example.entity.ParticleExampleEntity;
+import software.bernie.example.block.tile.TileMagicTorch;
+import software.bernie.geckolib3.particles.BedrockLibrary;
 import software.bernie.geckolib3.renderers.geo.GeoArmorRenderer;
 import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
+
+import java.io.File;
 
 @Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION, dependencies = "required-after:cleanroom@[0.3.31-alpha,);")
 public class GeckoLibMod {
 	private static CreativeTabs geckolibItemGroup;
+	public static BedrockLibrary particleLibraryInstance;
 
 	public static CreativeTabs getGeckolibItemGroup() {
 		if (geckolibItemGroup == null) {
@@ -59,6 +67,8 @@ public class GeckoLibMod {
 		if (GeckoLibConfig.enableExampleMod) {
 			MinecraftForge.EVENT_BUS.register(new CommonListener());
 		}
+		particleLibraryInstance = new BedrockLibrary(new File("./particle"));
+		particleLibraryInstance.reload();
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -74,6 +84,9 @@ public class GeckoLibMod {
 
 			ClientRegistry.bindTileEntitySpecialRenderer(BotariumTileEntity.class, new BotariumTileRenderer());
 			ClientRegistry.bindTileEntitySpecialRenderer(FertilizerTileEntity.class, new FertilizerTileRenderer());
+
+			ClientRegistry.bindTileEntitySpecialRenderer(TileMagicTorch.class, new MagicTorchTileRenderer());
+			RenderingRegistry.registerEntityRenderingHandler(ParticleExampleEntity.class, ParticleExampleEntityRenderer::new);
 		}
 	}
 

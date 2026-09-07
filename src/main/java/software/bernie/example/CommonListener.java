@@ -20,12 +20,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.registries.IForgeRegistry;
 import software.bernie.example.block.BotariumBlock;
 import software.bernie.example.block.FertilizerBlock;
+import software.bernie.example.block.MagicTorchBlock;
 import software.bernie.example.block.tile.BotariumTileEntity;
 import software.bernie.example.block.tile.FertilizerTileEntity;
+import software.bernie.example.block.tile.TileMagicTorch;
 import software.bernie.example.client.renderer.item.JackInTheBoxRenderer;
 import software.bernie.example.entity.BikeEntity;
 import software.bernie.example.entity.GeoExampleEntity;
 import software.bernie.example.entity.GeoExampleEntityLayer;
+import software.bernie.example.entity.ParticleExampleEntity;
 import software.bernie.example.item.JackInTheBoxItem;
 import software.bernie.example.item.PotatoArmorItem;
 import software.bernie.example.registry.BlockRegistry;
@@ -42,12 +45,15 @@ public class CommonListener {
 		blockRegistry = event.getRegistry();
 		BlockRegistry.BOTARIUM_BLOCK = new BotariumBlock();
 		BlockRegistry.FERTILIZER_BLOCK = new FertilizerBlock();
+		BlockRegistry.MAGIC_TORCH = new MagicTorchBlock();
 
 		BlockRegistry.BOTARIUM_BLOCK.setCreativeTab(GeckoLibMod.getGeckolibItemGroup());
 		BlockRegistry.FERTILIZER_BLOCK.setCreativeTab(GeckoLibMod.getGeckolibItemGroup());
+		BlockRegistry.MAGIC_TORCH.setCreativeTab(GeckoLibMod.getGeckolibItemGroup());
 
 		registerBlock(BlockRegistry.BOTARIUM_BLOCK, "botariumblock");
 		registerBlock(BlockRegistry.FERTILIZER_BLOCK, "fertilizerblock");
+		registerBlock(BlockRegistry.MAGIC_TORCH, "magictorch");
 	}
 
 	@SubscribeEvent
@@ -58,14 +64,15 @@ public class CommonListener {
 				.id(new ResourceLocation(GeckoLib.ModID, "bike"), id++).tracker(160, 2, false).build());
 		event.getRegistry().register(EntityEntryBuilder.create().entity(GeoExampleEntity.class).name("Example")
 				.id(new ResourceLocation(GeckoLib.ModID, "example"), id++).tracker(160, 2, false).build());
-		event.getRegistry()
-				.register(EntityEntryBuilder.create().entity(GeoExampleEntityLayer.class).name("ExampleLayer")
-						.id(new ResourceLocation(GeckoLib.ModID, "examplelayer"), id++).tracker(160, 2, false).build());
+		event.getRegistry().register(EntityEntryBuilder.create().entity(GeoExampleEntityLayer.class).name("ExampleLayer")
+				.id(new ResourceLocation(GeckoLib.ModID, "examplelayer"), id++).tracker(160, 2, false).build());
+		event.getRegistry().register(EntityEntryBuilder.create().entity(ParticleExampleEntity.class).name("ParticleExample")
+				.id(new ResourceLocation(GeckoLib.ModID, "particleexample"), id++).tracker(160, 2, false).build());
 
 		/* Tile entities */
 		GameRegistry.registerTileEntity(BotariumTileEntity.class, new ResourceLocation(GeckoLib.ModID, "botariumtile"));
-		GameRegistry.registerTileEntity(FertilizerTileEntity.class,
-				new ResourceLocation(GeckoLib.ModID, "fertilizertile"));
+		GameRegistry.registerTileEntity(FertilizerTileEntity.class, new ResourceLocation(GeckoLib.ModID, "fertilizertile"));
+		GameRegistry.registerTileEntity(TileMagicTorch.class, new ResourceLocation(GeckoLib.ModID, "magictorchtile"));
 	}
 
 	@SubscribeEvent
@@ -84,6 +91,7 @@ public class CommonListener {
 
 		ItemRegistry.BOTARIUM = registerItem(new ItemBlock(BlockRegistry.BOTARIUM_BLOCK), "botarium");
 		ItemRegistry.FERTILIZER = registerItem(new ItemBlock(BlockRegistry.FERTILIZER_BLOCK), "fertilizer");
+		ItemRegistry.MAGIC_TORCH = registerItem(new ItemBlock(BlockRegistry.MAGIC_TORCH), "magictorch");
 	}
 
 	public static <T extends Item> T registerItem(T item, String name) {
@@ -130,6 +138,8 @@ public class CommonListener {
 				new ModelResourceLocation(GeckoLib.ModID + ":potato_leggings", "inventory"));
 		ModelLoader.setCustomModelResourceLocation(ItemRegistry.POTATO_BOOTS, 0,
 				new ModelResourceLocation(GeckoLib.ModID + ":potato_boots", "inventory"));
+		ModelLoader.setCustomModelResourceLocation(ItemRegistry.MAGIC_TORCH, 0,
+				new ModelResourceLocation(GeckoLib.ModID + ":magictorch", "inventory"));
 
 		ItemRegistry.JACK_IN_THE_BOX.setTileEntityItemStackRenderer(new JackInTheBoxRenderer());
 	}

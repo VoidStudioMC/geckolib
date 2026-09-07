@@ -24,7 +24,7 @@ import software.bernie.geckolib3.core.util.MathUtil;
 
 public class AnimationProcessor<T extends IAnimatable> {
 	public boolean reloadAnimations = false;
-	private List<IBone> modelRendererList = new ArrayList();
+	private final List<IBone> modelRendererList = new ArrayList<>();
 	private double lastTickValue = -1;
 	private Set<Integer> animatedEntities = new HashSet<>();
 	private final IAnimatableModel animatedModel;

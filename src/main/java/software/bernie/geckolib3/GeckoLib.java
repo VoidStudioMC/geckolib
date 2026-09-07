@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import software.bernie.geckolib3.Reference;
 import software.bernie.geckolib3.resource.ResourceListener;
 
 public class GeckoLib {

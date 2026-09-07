@@ -18,11 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import net.minecraft.client.Minecraft;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.molang.MolangParser;
 
+import software.bernie.geckolib3.asm.IAdvController;
 import software.bernie.geckolib3.core.AnimationState;
 import software.bernie.geckolib3.core.ConstantValue;
 import software.bernie.geckolib3.core.IAnimatable;
@@ -47,13 +49,15 @@ import software.bernie.geckolib3.core.keyframe.VectorKeyFrameList;
 import software.bernie.geckolib3.core.processor.IBone;
 import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
 import software.bernie.geckolib3.core.util.Axis;
+import software.bernie.geckolib3.particles.BedrockLibrary;
+import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
 
 /**
  * The type Animation controller.
  *
  * @param <T> the type parameter
  */
-public class AnimationController<T extends IAnimatable> {
+public class AnimationController<T extends IAnimatable> implements IAdvController {
 	static List<ModelFetcher<?>> modelFetchers = new ArrayList<>();
 	/**
 	 * The Entity.
@@ -178,6 +182,24 @@ public class AnimationController<T extends IAnimatable> {
 	protected boolean needsAnimationReload = false;
 	public double animationSpeed = 1D;
 	private final Set<EventKeyFrame<?>> executedKeyFrames = new HashSet<>();
+
+	public final List<BedrockEmitter> emitters = new ArrayList<>();
+	public long lastTick;
+
+	@Override
+	public List<BedrockEmitter> getEmitters() {
+		return emitters;
+	}
+
+	@Override
+	public long getLastTick() {
+		return lastTick;
+	}
+
+	@Override
+	public void setLastTick(long tick) {
+		this.lastTick = tick;
+	}
 
 	/**
 	 * This method sets the current animation with an animation builder. You can run
@@ -392,6 +414,31 @@ public class AnimationController<T extends IAnimatable> {
 		double actualTick = tick;
 		tick = adjustTick(tick);
 
+		if (Minecraft.getMinecraft().world != null) {
+			long time = Minecraft.getMinecraft().world.getTotalWorldTime();
+			if (time > getLastTick()) {
+				setLastTick(time);
+
+				List<BedrockEmitter> emitters = getEmitters();
+				for (int i = 0; i < emitters.size(); i++) {
+					BedrockEmitter emitter = emitters.get(i);
+					String name = emitter.scheme.name;
+					String loc = emitter.locator;
+					if (!emitter.scheme.toReload) {
+						emitters.get(i).update();
+					} else {
+						emitter.stop();
+						emitter = new BedrockEmitter();
+						emitter.setScheme(BedrockLibrary.instance.get(name));
+						emitter.setTarget(Minecraft.getMinecraft().player);
+						emitter.locator = loc;
+						emitter.start();
+						emitters.set(i, emitter);
+					}
+				}
+			}
+		}
+
 		// Transition period has ended, reset the tick and set the animation to running
 		if (animationState == AnimationState.Transitioning && tick >= transitionLengthTicks) {
 			this.shouldResetTick = true;
@@ -431,6 +478,9 @@ public class AnimationController<T extends IAnimatable> {
 				justStartedTransition = false;
 				this.currentAnimation = animationQueue.poll();
 				resetEventKeyFrames();
+				for (BedrockEmitter emitter : getEmitters()) {
+					emitter.setLastLoop();
+				}
 				saveSnapshotsForAnimation(currentAnimation, boneSnapshotCollection);
 			}
 			if (currentAnimation != null) {
@@ -553,6 +603,11 @@ public class AnimationController<T extends IAnimatable> {
 			// If the current animation is set to loop, keep it as the current animation and
 			// just start over
 			if (!currentAnimation.loop.isRepeatingAfterEnd()) {
+				List<BedrockEmitter> emitters = getEmitters();
+				for (BedrockEmitter emitter : emitters) {
+					emitter.setLastLoop();
+				}
+
 				// Pull the next animation from the queue
 				Animation peek = animationQueue.peek();
 				if (peek == null) {
@@ -573,6 +628,14 @@ public class AnimationController<T extends IAnimatable> {
 			}
 		}
 		setAnimTime(parser, tick);
+
+		List<BedrockEmitter> emitters = getEmitters();
+		for (int i = 0; i < emitters.size(); i++) {
+			if (!emitters.get(i).playing && emitters.get(i).particles.isEmpty()) {
+				emitters.remove(i);
+				i--;
+			}
+		}
 
 		// Loop through every boneanimation in the current animation and process the
 		// values
@@ -623,24 +686,29 @@ public class AnimationController<T extends IAnimatable> {
 			}
 		}
 
-		if (soundListener != null || particleListener != null || customInstructionListener != null) {
+		//if (soundListener != null || particleListener != null || customInstructionListener != null) {
 			for (EventKeyFrame<String> soundKeyFrame : currentAnimation.soundKeyFrames) {
 				if (!this.executedKeyFrames.contains(soundKeyFrame) && tick >= soundKeyFrame.getStartTick()) {
 					SoundKeyframeEvent<T> event = new SoundKeyframeEvent<>(this.animatable, tick,
 							soundKeyFrame.getEventData(), this);
-					soundListener.playSound(event);
-
+					if (soundListener != null) {
+						soundListener.playSound(event);
+					}
 					this.executedKeyFrames.add(soundKeyFrame);
 				}
 			}
 
 			for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
 				if (!this.executedKeyFrames.contains(particleEventKeyFrame)
-						&& tick >= particleEventKeyFrame.getStartTick()) {
+						&& tick >= particleEventKeyFrame.getStartTick() || hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
 					ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
 							particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
 							this);
-					particleListener.summonParticle(event);
+					processBedrockParticleEvent(this, event);
+
+					if (particleListener != null) {
+						particleListener.summonParticle(event);
+					}
 
 					this.executedKeyFrames.add(particleEventKeyFrame);
 				}
@@ -651,12 +719,14 @@ public class AnimationController<T extends IAnimatable> {
 						&& tick >= customInstructionKeyFrame.getStartTick()) {
 					CustomInstructionKeyframeEvent<T> event = new CustomInstructionKeyframeEvent<>(this.animatable,
 							tick, customInstructionKeyFrame.getEventData(), this);
-					customInstructionListener.executeInstruction(event);
+					if (customInstructionListener != null) {
+						customInstructionListener.executeInstruction(event);
+					}
 
 					this.executedKeyFrames.add(customInstructionKeyFrame);
 				}
 			}
-		}
+		//}
 
 		if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.Transitioning) {
 			this.currentAnimation = animationQueue.poll();
@@ -749,6 +819,40 @@ public class AnimationController<T extends IAnimatable> {
 
 	public void setAnimationSpeed(double animationSpeed) {
 		this.animationSpeed = animationSpeed;
+	}
+
+	public static boolean hasParticleOnLoc(AnimationController controller, String effect, String locator) {
+		List<BedrockEmitter> emitters = ((IAdvController) controller).getEmitters();
+		for (BedrockEmitter emitter : emitters) {
+			if (emitter.scheme != null && emitter.scheme.name != null && emitter.scheme.name.equals(effect) &&
+					emitter.locator != null && emitter.locator.equals(locator) && emitter.isLooping()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static void processBedrockParticleEvent(AnimationController controller, ParticleKeyFrameEvent event) {
+		if(controller==null){
+			return;
+		}
+		List<BedrockEmitter> emitters = ((IAdvController)controller).getEmitters();
+		if (BedrockLibrary.instance.presets.containsKey(event.effect)) {
+			BedrockEmitter emitter = new BedrockEmitter();
+			emitter.setScheme(BedrockLibrary.instance.get(event.effect));
+			emitter.setTarget(Minecraft.getMinecraft().player);
+			emitter.locator = event.locator;
+			try {
+				String[] values = event.script.split(";");
+				if (values.length > 0) {
+					emitter.disableAfter = Integer.parseInt(values[0]);
+				}
+			} catch (Exception ignored) {
+				emitter.disableAfter = -1;
+			}
+			emitter.start();
+			emitters.add(emitter);
+		}
 	}
 
 	@FunctionalInterface

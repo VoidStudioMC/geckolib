@@ -30,6 +30,7 @@ import software.bernie.geckolib3.file.AnimationFileLoader;
 import software.bernie.geckolib3.file.GeoModelLoader;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.molang.MolangRegistrar;
+import software.bernie.geckolib3.particles.BedrockLibrary;
 
 @SuppressWarnings("deprecation")
 public class GeckoLibCache implements IResourceManagerReloadListener {
@@ -92,7 +93,15 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 				try {
 					tempAnimations.put(location, animationLoader.loadAllAnimations(parser, location, resourceManager));
 				} catch (Exception e) {
-					GeckoLib.LOGGER.debug("Error loading animation file \"" + location + "\"!", e);
+                    GeckoLib.LOGGER.debug("Error loading animation file \"{}\"!", location, e);
+				}
+			}
+
+			for (ResourceLocation location : getLocations(pack, "particles", fileName -> fileName.endsWith(".json"))) {
+				try {
+					BedrockLibrary.instance.storeFactory(location);
+				} catch (Exception e) {
+					GeckoLib.LOGGER.error("Error loading particle file \"{}\"!", location, e);
 				}
 			}
 
@@ -100,12 +109,13 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 				try {
 					tempModels.put(location, modelLoader.loadModel(resourceManager, location));
 				} catch (Exception e) {
-					GeckoLib.LOGGER.debug("Error loading model file \"" + location + "\"!", e);
+                    GeckoLib.LOGGER.debug("Error loading model file \"{}\"!", location, e);
 				}
 			}
 		}
 
 		animations = tempAnimations;
+		BedrockLibrary.instance.reload();
 		geoModels = tempModels;
 	}
 

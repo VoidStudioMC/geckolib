@@ -14,4 +14,5 @@ public class ItemRegistry {
 
 	public static Item BOTARIUM;
 	public static Item FERTILIZER;
+	public static Item MAGIC_TORCH;
 }
