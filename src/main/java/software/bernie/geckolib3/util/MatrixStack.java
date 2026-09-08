@@ -15,8 +15,8 @@ import software.bernie.geckolib3.geo.render.built.GeoCube;
  * Simple implementation of a matrix stack
  */
 public class MatrixStack {
-	private Stack<Matrix4f> model = new Stack<Matrix4f>();
-	private Stack<Matrix3f> normal = new Stack<Matrix3f>();
+	private Stack<Matrix4f> model = new Stack<>();
+	private Stack<Matrix3f> normal = new Stack<>();
 
 	private Matrix4f tempModelMatrix = new Matrix4f();
 	private Matrix3f tempNormalMatrix = new Matrix3f();

@@ -3,16 +3,6 @@ package software.bernie.geckolib3.particles.emitter;
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.Variable;
 import com.eliotlash.mclib.utils.Interpolations;
-import software.bernie.geckolib3.mclib.utils.resources.GifTexture;
-import software.bernie.geckolib3.particles.BedrockScheme;
-import software.bernie.geckolib3.particles.components.*;
-import software.bernie.geckolib3.particles.components.appearance.BedrockComponentAppearanceBillboard;
-import software.bernie.geckolib3.particles.components.appearance.BedrockComponentCollisionAppearance;
-import software.bernie.geckolib3.particles.components.appearance.BedrockComponentParticleMorph;
-import software.bernie.geckolib3.particles.components.lifetime.BedrockComponentLifetimeLooping;
-import software.bernie.geckolib3.particles.components.meta.BedrockComponentInitialization;
-import software.bernie.geckolib3.particles.components.motion.BedrockComponentMotionCollision;
-import software.bernie.geckolib3.particles.components.rate.BedrockComponentRateSteady;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -24,22 +14,31 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
+import software.bernie.geckolib3.mclib.utils.resources.GifTexture;
+import software.bernie.geckolib3.particles.BedrockScheme;
+import software.bernie.geckolib3.particles.components.*;
+import software.bernie.geckolib3.particles.components.appearance.BedrockComponentAppearanceBillboard;
+import software.bernie.geckolib3.particles.components.appearance.BedrockComponentCollisionAppearance;
+import software.bernie.geckolib3.particles.components.appearance.BedrockComponentParticleMorph;
+import software.bernie.geckolib3.particles.components.lifetime.BedrockComponentLifetimeLooping;
+import software.bernie.geckolib3.particles.components.meta.BedrockComponentInitialization;
+import software.bernie.geckolib3.particles.components.motion.BedrockComponentMotionCollision;
+import software.bernie.geckolib3.particles.components.rate.BedrockComponentRateSteady;
 
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import java.util.*;
 
-public class BedrockEmitter
-{
+public class BedrockEmitter {
     public BedrockScheme scheme;
     public String locator;
-    public int disableAfter=-1;
-    public double lastTick=0;
-    public List<BedrockParticle> particles = new ArrayList<BedrockParticle>();
-    public List<BedrockParticle> splitParticles = new ArrayList<BedrockParticle>();
+    public int disableAfter = -1;
+    public double lastTick = 0;
+    public List<BedrockParticle> particles = new ArrayList<>();
+    public List<BedrockParticle> splitParticles = new ArrayList<>();
     public Map<String, IValue> variables;
-    public Map<String, Double> initialValues = new HashMap<String, Double>();
+    public Map<String, Double> initialValues = new HashMap<>();
 
     public EntityLivingBase target;
     public World world;
@@ -53,8 +52,8 @@ public class BedrockEmitter
     /* Intermediate values */
     public Vector3d lastGlobal = new Vector3d();
     public Vector3d prevGlobal = new Vector3d();
-    public Matrix3f rotation = new Matrix3f(1,0,0,0,1,0,0,0,1);
-    public Matrix3f prevRotation = new Matrix3f(1,0,0,0,1,0,0,0,1);
+    public Matrix3f rotation = new Matrix3f(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    public Matrix3f prevRotation = new Matrix3f(1, 0, 0, 0, 1, 0, 0, 0, 1);
     public Vector3f angularVelocity = new Vector3f();
     public Vector3d translation = new Vector3d();
 
@@ -69,11 +68,11 @@ public class BedrockEmitter
     public float random3 = (float) Math.random();
     public float random4 = (float) Math.random();
 
-    private BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
+    private final BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
-    public double[] scale = {1,1,1};
+    public double[] scale = {1, 1, 1};
 
-    public boolean lastLoop=false;
+    public boolean lastLoop = false;
     /* Camera properties */
     public int perspective;
     public float cYaw;
@@ -105,74 +104,64 @@ public class BedrockEmitter
     private Variable varEmitterRandom3;
     private Variable varEmitterRandom4;
 
-    public boolean isFinished()
-    {
+    public boolean isFinished() {
         return !this.running && this.particles.isEmpty();
     }
 
     public boolean isLooping() {
-        for(BedrockComponentBase componentBase: scheme.components){
-            if(componentBase instanceof BedrockComponentLifetimeLooping){
+        for (BedrockComponentBase componentBase : scheme.components) {
+            if (componentBase instanceof BedrockComponentLifetimeLooping) {
                 return true;
             }
         }
         return false;
     }
 
-    public void setLastLoop(){
-        lastLoop=true;
+    public void setLastLoop() {
+        lastLoop = true;
     }
 
-    public double getDistanceSq()
-    {
+    public double getDistanceSq() {
         this.setupCameraProperties(0F);
 
-        double dx = this.cX -  this.lastGlobal.x;
-        double dy = this.cY -  this.lastGlobal.y;
-        double dz = this.cZ -  this.lastGlobal.z;
+        double dx = this.cX - this.lastGlobal.x;
+        double dy = this.cY - this.lastGlobal.y;
+        double dz = this.cZ - this.lastGlobal.z;
 
         return dx * dx + dy * dy + dz * dz;
     }
 
-    public double getAge()
-    {
+    public double getAge() {
         return this.getAge(0);
     }
 
-    public double getAge(float partialTicks)
-    {
+    public double getAge(float partialTicks) {
         return (this.age + partialTicks) / 20.0;
     }
 
-    public boolean isMorphParticle()
-    {
+    public boolean isMorphParticle() {
         BedrockComponentParticleMorph morphComponent = this.scheme.getOrCreate(BedrockComponentParticleMorph.class);
 
         return morphComponent.enabled;
     }
 
-    public void setTarget(EntityLivingBase target)
-    {
+    public void setTarget(EntityLivingBase target) {
         this.target = target;
         this.world = target == null ? null : target.world;
     }
 
-    public void setScheme(BedrockScheme scheme)
-    {
+    public void setScheme(BedrockScheme scheme) {
         this.setScheme(scheme, null);
     }
 
-    public void setScheme(BedrockScheme scheme, Map<String, String> variables)
-    {
+    public void setScheme(BedrockScheme scheme, Map<String, String> variables) {
         this.scheme = scheme;
 
-        if (this.scheme == null)
-        {
+        if (this.scheme == null) {
             return;
         }
 
-        if (variables != null)
-        {
+        if (variables != null) {
             this.parseVariables(variables);
         }
 
@@ -186,8 +175,7 @@ public class BedrockEmitter
 
     /* Variable related code */
 
-    public void setupVariables()
-    {
+    public void setupVariables() {
         this.varAge = this.scheme.parser.variables.get("variable.particle_age");
         this.varLifetime = this.scheme.parser.variables.get("variable.particle_lifetime");
         this.varRandom1 = this.scheme.parser.variables.get("variable.particle_random_1");
@@ -209,8 +197,7 @@ public class BedrockEmitter
         this.varEmitterRandom4 = this.scheme.parser.variables.get("variable.emitter_random_4");
     }
 
-    public void setParticleVariables(BedrockParticle particle, float partialTicks)
-    {
+    public void setParticleVariables(BedrockParticle particle, float partialTicks) {
         if (this.varAge != null) this.varAge.set(particle.getAge(partialTicks));
         if (this.varLifetime != null) this.varLifetime.set(particle.lifetime / 20.0);
         if (this.varRandom1 != null) this.varRandom1.set(particle.random1);
@@ -228,20 +215,16 @@ public class BedrockEmitter
 
         BedrockComponentInitialization component = this.scheme.get(BedrockComponentInitialization.class);
 
-        if (component != null)
-        {
+        if (component != null) {
             component.particleUpdate.get();
         }
     }
 
-    public void setEmitterVariables(float partialTicks)
-    {
-        for (Map.Entry<String, Double> entry : this.initialValues.entrySet())
-        {
+    public void setEmitterVariables(float partialTicks) {
+        for (Map.Entry<String, Double> entry : this.initialValues.entrySet()) {
             Variable var = this.scheme.parser.variables.get(entry.getKey());
 
-            if (var != null)
-            {
+            if (var != null) {
                 var.set(entry.getValue());
             }
         }
@@ -256,48 +239,37 @@ public class BedrockEmitter
         this.scheme.updateCurves();
     }
 
-    public void parseVariables(Map<String, String> variables)
-    {
-        this.variables = new HashMap<String, IValue>();
+    public void parseVariables(Map<String, String> variables) {
+        this.variables = new HashMap<>();
 
-        for (Map.Entry<String, String> entry : variables.entrySet())
-        {
+        for (Map.Entry<String, String> entry : variables.entrySet()) {
             this.parseVariable(entry.getKey(), entry.getValue());
         }
     }
 
-    public void parseVariable(String name, String expression)
-    {
-        try
-        {
+    public void parseVariable(String name, String expression) {
+        try {
             this.variables.put(name, this.scheme.parser.parse(expression));
+        } catch (Exception e) {
         }
-        catch (Exception e)
-        {}
     }
 
-    public void replaceVariables()
-    {
-        if (this.variables == null)
-        {
+    public void replaceVariables() {
+        if (this.variables == null) {
             return;
         }
 
-        for (Map.Entry<String, IValue> entry : this.variables.entrySet())
-        {
+        for (Map.Entry<String, IValue> entry : this.variables.entrySet()) {
             Variable var = this.scheme.parser.variables.get(entry.getKey());
 
-            if (var != null)
-            {
+            if (var != null) {
                 var.set(entry.getValue().get());
             }
         }
     }
 
-    public void start()
-    {
-        if (this.playing)
-        {
+    public void start() {
+        if (this.playing) {
             return;
         }
 
@@ -305,16 +277,13 @@ public class BedrockEmitter
         this.spawnedParticles = 0;
         this.playing = true;
 
-        for (IComponentEmitterInitialize component : this.scheme.emitterInitializes)
-        {
+        for (IComponentEmitterInitialize component : this.scheme.emitterInitializes) {
             component.apply(this);
         }
     }
 
-    public void stop()
-    {
-        if (!this.playing)
-        {
+    public void stop() {
+        if (!this.playing) {
             return;
         }
 
@@ -330,17 +299,14 @@ public class BedrockEmitter
     /**
      * Update this current emitter
      */
-    public void update()
-    {
-        if (this.scheme == null)
-        {
+    public void update() {
+        if (this.scheme == null) {
             return;
         }
 
         this.setEmitterVariables(0);
 
-        for (IComponentEmitterUpdate component : this.scheme.emitterUpdates)
-        {
+        for (IComponentEmitterUpdate component : this.scheme.emitterUpdates) {
             component.update(this);
         }
 
@@ -354,56 +320,47 @@ public class BedrockEmitter
     /**
      * Update all particles
      */
-    private void updateParticles()
-    {
+    private void updateParticles() {
         Iterator<BedrockParticle> it = this.particles.iterator();
 
-        while (it.hasNext())
-        {
+        while (it.hasNext()) {
             BedrockParticle particle = it.next();
 
             this.updateParticle(particle);
 
-            if (particle.dead)
-            {
+            if (particle.dead) {
                 it.remove();
             }
         }
 
-        if (!this.splitParticles.isEmpty())
-        {
+        if (!this.splitParticles.isEmpty()) {
             this.particles.addAll(this.splitParticles);
             this.splitParticles.clear();
         }
     }
 
-    private void updateParticlesCollision()
-    {
+    private void updateParticlesCollision() {
         BedrockComponentMotionCollision collision = null;
-        for (IComponentParticleUpdate component : this.scheme.particleUpdates)
-        {
-            if(component instanceof BedrockComponentMotionCollision) {
-                collision=(BedrockComponentMotionCollision) component;
+        for (IComponentParticleUpdate component : this.scheme.particleUpdates) {
+            if (component instanceof BedrockComponentMotionCollision) {
+                collision = (BedrockComponentMotionCollision) component;
             }
         }
-        if(collision==null) return;
+        if (collision == null) return;
 
         Iterator<BedrockParticle> it = this.particles.iterator();
 
-        while (it.hasNext())
-        {
+        while (it.hasNext()) {
             BedrockParticle particle = it.next();
 
-            collision.update(this,particle);
+            collision.update(this, particle);
 
-            if (particle.dead)
-            {
+            if (particle.dead) {
                 it.remove();
             }
         }
 
-        if (!this.splitParticles.isEmpty())
-        {
+        if (!this.splitParticles.isEmpty()) {
             this.particles.addAll(this.splitParticles);
             this.splitParticles.clear();
         }
@@ -412,14 +369,12 @@ public class BedrockEmitter
     /**
      * Update a single particle
      */
-    private void updateParticle(BedrockParticle particle)
-    {
+    private void updateParticle(BedrockParticle particle) {
         particle.update(this);
 
         this.setParticleVariables(particle, 0);
 
-        for (IComponentParticleUpdate component : this.scheme.particleUpdates)
-        {
+        for (IComponentParticleUpdate component : this.scheme.particleUpdates) {
             component.update(this, particle);
         }
     }
@@ -427,10 +382,8 @@ public class BedrockEmitter
     /**
      * Spawn a particle
      */
-    public void spawnParticle()
-    {
-        if (!this.running)
-        {
+    public void spawnParticle() {
+        if (!this.running) {
             return;
         }
 
@@ -440,20 +393,17 @@ public class BedrockEmitter
     /**
      * Create a new particle
      */
-    public BedrockParticle createParticle(boolean forceRelative)
-    {
+    public BedrockParticle createParticle(boolean forceRelative) {
         BedrockParticle particle = new BedrockParticle();
 
         this.setParticleVariables(particle, 0);
         particle.setupMatrix(this);
 
-        for (IComponentParticleInitialize component : this.scheme.particleInitializes)
-        {
+        for (IComponentParticleInitialize component : this.scheme.particleInitializes) {
             component.apply(this, particle);
         }
 
-        if (particle.relativePosition && !particle.relativeRotation)
-        {
+        if (particle.relativePosition && !particle.relativeRotation) {
             Vector3f vec = new Vector3f(particle.position);
 
             particle.matrix.transform(vec);
@@ -463,8 +413,7 @@ public class BedrockEmitter
             particle.position.z = vec.z;
         }
 
-        if (!(particle.relativePosition && particle.relativeRotation))
-        {
+        if (!(particle.relativePosition && particle.relativeRotation)) {
             particle.position.add(this.lastGlobal);
             particle.initialPosition.add(this.lastGlobal);
         }
@@ -479,10 +428,8 @@ public class BedrockEmitter
     /**
      * Render the particle on screen
      */
-    public void renderOnScreen(int x, int y, float scale)
-    {
-        if (this.scheme == null)
-        {
+    public void renderOnScreen(int x, int y, float scale) {
+        if (this.scheme == null) {
             return;
         }
 
@@ -496,15 +443,13 @@ public class BedrockEmitter
 
         this.rotation = new Matrix3f();
 
-        if (!listParticle.isEmpty() && (!this.isMorphParticle() || particleMorphComponent.renderTexture))
-        {
+        if (!listParticle.isEmpty() && (!this.isMorphParticle() || particleMorphComponent.renderTexture)) {
             Minecraft.getMinecraft().renderEngine.bindTexture(this.scheme.texture);
 
             this.scheme.material.beginGL();
             GlStateManager.disableCull();
 
-            if (this.guiParticle == null || this.guiParticle.dead)
-            {
+            if (this.guiParticle == null || this.guiParticle.dead) {
                 this.guiParticle = this.createParticle(true);
             }
 
@@ -513,8 +458,7 @@ public class BedrockEmitter
             this.setEmitterVariables(partialTicks);
             this.setParticleVariables(this.guiParticle, partialTicks);
 
-            for (IComponentParticleRender render : listParticle)
-            {
+            for (IComponentParticleRender render : listParticle) {
                 render.renderOnScreen(this.guiParticle, x, y, scale, partialTicks);
             }
 
@@ -522,10 +466,8 @@ public class BedrockEmitter
             GlStateManager.enableCull();
         }
 
-        if (!listMorph.isEmpty() && this.isMorphParticle())
-        {
-            if (this.guiParticle == null || this.guiParticle.dead)
-            {
+        if (!listMorph.isEmpty() && this.isMorphParticle()) {
+            if (this.guiParticle == null || this.guiParticle.dead) {
                 this.guiParticle = this.createParticle(true);
             }
 
@@ -534,8 +476,7 @@ public class BedrockEmitter
             this.setEmitterVariables(partialTicks);
             this.setParticleVariables(this.guiParticle, partialTicks);
 
-            for (IComponentParticleMorphRender render : listMorph)
-            {
+            for (IComponentParticleMorphRender render : listMorph) {
                 render.renderOnScreen(this.guiParticle, x, y, scale, partialTicks);
             }
         }
@@ -546,10 +487,8 @@ public class BedrockEmitter
     /**
      * Render all the particles in this particle emitter
      */
-    public void render(float partialTicks)
-    {
-        if (this.scheme == null)
-        {
+    public void render(float partialTicks) {
+        if (this.scheme == null) {
             return;
         }
 
@@ -563,17 +502,14 @@ public class BedrockEmitter
         boolean particleRendering = !morphRendering || particleMorphComponent.renderTexture;
         updateParticlesCollision();
         /* particle rendering */
-        if (particleRendering)
-        {
+        if (particleRendering) {
             this.setupOpenGL(partialTicks);
 
-            for (IComponentParticleRender component : renders)
-            {
+            for (IComponentParticleRender component : renders) {
                 component.preRender(this, partialTicks);
             }
 
-            if (!this.particles.isEmpty())
-            {
+            if (!this.particles.isEmpty()) {
                 this.depthSorting();
 
                 this.renderParticles(this.scheme.texture, renders, false, partialTicks);
@@ -581,14 +517,12 @@ public class BedrockEmitter
                 BedrockComponentCollisionAppearance collisionAppearance = this.scheme.getOrCreate(BedrockComponentCollisionAppearance.class);
 
                 /* rendering the collided particles with an extra component */
-                if (collisionAppearance != null && collisionAppearance.texture != null)
-                {
+                if (collisionAppearance != null && collisionAppearance.texture != null) {
                     this.renderParticles(collisionAppearance.texture, renders, true, partialTicks);
                 }
             }
 
-            for (IComponentParticleRender component : renders)
-            {
+            for (IComponentParticleRender component : renders) {
                 component.postRender(this, partialTicks);
             }
 
@@ -596,18 +530,14 @@ public class BedrockEmitter
         }
 
         /* Morph rendering */
-        if (morphRendering)
-        {
-            for (IComponentParticleMorphRender component : morphRenders)
-            {
+        if (morphRendering) {
+            for (IComponentParticleMorphRender component : morphRenders) {
                 component.preRender(this, partialTicks);
             }
 
-            if (!this.particles.isEmpty())
-            {
+            if (!this.particles.isEmpty()) {
                 //only depth sort either in particle rendering or morph rendering
-                if (!particleRendering)
-                {
+                if (!particleRendering) {
                     this.depthSorting();
                 }
 
@@ -621,18 +551,13 @@ public class BedrockEmitter
                 }*/
             }
 
-            for (IComponentParticleMorphRender component : morphRenders)
-            {
-                if (component.getClass() == BedrockComponentRateSteady.class)
-                {
-                    if (!particleRendering)
-                    {
+            for (IComponentParticleMorphRender component : morphRenders) {
+                if (component.getClass() == BedrockComponentRateSteady.class) {
+                    if (!particleRendering) {
                         //only spawn particles either in particles or in morph rendering
                         component.postRender(this, partialTicks);
                     }
-                }
-                else
-                {
+                } else {
                     component.postRender(this, partialTicks);
                 }
             }
@@ -641,21 +566,19 @@ public class BedrockEmitter
 
     /**
      * This method renders the particles using morphs
+     *
      * @param renderComponents
      * @param collided
      * @param partialTicks
      */
-    private void renderParticles(List<? extends IComponentParticleMorphRender> renderComponents, boolean collided, float partialTicks)
-    {
+    private void renderParticles(List<? extends IComponentParticleMorphRender> renderComponents, boolean collided, float partialTicks) {
         BufferBuilder builder = Tessellator.getInstance().getBuffer();
 
-        for (BedrockParticle particle : this.particles)
-        {
+        for (BedrockParticle particle : this.particles) {
             this.setEmitterVariables(partialTicks);
             this.setParticleVariables(particle, partialTicks);
 
-            for (IComponentRenderBase component : renderComponents)
-            {
+            for (IComponentRenderBase component : renderComponents) {
                 component.render(this, particle, builder, partialTicks);
             }
         }
@@ -663,39 +586,35 @@ public class BedrockEmitter
 
     /**
      * This method renders the particles using the default bedrock billboards
-     * @param texture Ressource location of the texture to render
+     *
+     * @param texture          Ressource location of the texture to render
      * @param renderComponents
      * @param collided
      * @param partialTicks
      */
-    private void renderParticles(ResourceLocation texture, List<? extends IComponentParticleRender> renderComponents, boolean collided, float partialTicks)
-    {
+    private void renderParticles(ResourceLocation texture, List<? extends IComponentParticleRender> renderComponents, boolean collided, float partialTicks) {
         BufferBuilder builder = Tessellator.getInstance().getBuffer();
 
         GifTexture.bindTexture(texture, this.age, partialTicks);
 
         builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_LMAP_COLOR);
 
-        for (BedrockParticle particle : this.particles)
-        {
+        for (BedrockParticle particle : this.particles) {
             boolean collisionStuff = particle.isCollisionTexture(this) || particle.isCollisionTinting(this);
 
-            if (collisionStuff != collided)
-            {
+            if (collisionStuff != collided) {
                 continue;
             }
 
             this.setEmitterVariables(partialTicks);
             this.setParticleVariables(particle, partialTicks);
 
-            for (IComponentRenderBase component : renderComponents)
-            {
+            for (IComponentRenderBase component : renderComponents) {
                 /* if collisionTexture or collisionTinting is true - means that those options are enabled
                  * therefore the old Billboardappearance should not be called
                  * because collisionAppearance.class is rendering
                  */
-                if (!(collisionStuff && component.getClass() == BedrockComponentAppearanceBillboard.class))
-                {
+                if (!(collisionStuff && component.getClass() == BedrockComponentAppearanceBillboard.class)) {
                     component.render(this, particle, builder, partialTicks);
                 }
             }
@@ -704,12 +623,10 @@ public class BedrockEmitter
         Tessellator.getInstance().draw();
     }
 
-    private void setupOpenGL(float partialTicks)
-    {
+    private void setupOpenGL(float partialTicks) {
         this.scheme.material.beginGL();
 
-        if (!GuiModelRenderer.isRendering())
-        {
+        if (!GuiModelRenderer.isRendering()) {
 //            Entity camera = Minecraft.getMinecraft().getRenderViewEntity();
 //            double playerX = camera.prevPosX + (camera.posX - camera.prevPosX) * (double) partialTicks;
 //            double playerY = camera.prevPosY + (camera.posY - camera.prevPosY) * (double) partialTicks;
@@ -724,10 +641,8 @@ public class BedrockEmitter
         }
     }
 
-    private void endOpenGL()
-    {
-        if (!GuiModelRenderer.isRendering())
-        {
+    private void endOpenGL() {
+        if (!GuiModelRenderer.isRendering()) {
             Tessellator.getInstance().getBuffer().setTranslation(0, 0, 0);
         }
 
@@ -735,8 +650,7 @@ public class BedrockEmitter
     }
 
 
-    private void depthSorting()
-    {
+    private void depthSorting() {
         if (true)//TODO Blockbuster.snowstormDepthSorting.get())
         {
             this.particles.sort((a, b) ->
@@ -744,12 +658,9 @@ public class BedrockEmitter
                 double ad = a.getDistanceSq(this);
                 double bd = b.getDistanceSq(this);
 
-                if (ad < bd)
-                {
+                if (ad < bd) {
                     return 1;
-                }
-                else if (ad > bd)
-                {
+                } else if (ad > bd) {
                     return -1;
                 }
 
@@ -758,10 +669,8 @@ public class BedrockEmitter
         }
     }
 
-    public void setupCameraProperties(float partialTicks)
-    {
-        if (this.world != null)
-        {
+    public void setupCameraProperties(float partialTicks) {
+        if (this.world != null) {
             Entity camera = Minecraft.getMinecraft().getRenderViewEntity();
 
             this.perspective = Minecraft.getMinecraft().gameSettings.thirdPersonView;
@@ -776,10 +685,8 @@ public class BedrockEmitter
     /**
      * Get brightness for the block
      */
-    public int getBrightnessForRender(float partialTicks, double x, double y, double z)
-    {
-        if (this.lit || this.world == null)
-        {
+    public int getBrightnessForRender(float partialTicks, double x, double y, double z) {
+        if (this.lit || this.world == null) {
             return 15728880;
         }
 

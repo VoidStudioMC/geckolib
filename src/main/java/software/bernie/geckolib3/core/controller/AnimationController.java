@@ -24,7 +24,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.molang.MolangParser;
 
-import software.bernie.geckolib3.asm.IAdvController;
 import software.bernie.geckolib3.core.AnimationState;
 import software.bernie.geckolib3.core.ConstantValue;
 import software.bernie.geckolib3.core.IAnimatable;

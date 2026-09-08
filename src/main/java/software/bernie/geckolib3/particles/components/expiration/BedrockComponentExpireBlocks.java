@@ -2,9 +2,6 @@ package software.bernie.geckolib3.particles.components.expiration;
 
 import com.eliotlash.molang.MolangException;
 import com.eliotlash.molang.MolangParser;
-import software.bernie.geckolib3.particles.components.BedrockComponentBase;
-import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
-import software.bernie.geckolib3.particles.emitter.BedrockParticle;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import net.minecraft.block.Block;
@@ -12,29 +9,27 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import software.bernie.geckolib3.particles.components.BedrockComponentBase;
+import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
+import software.bernie.geckolib3.particles.emitter.BedrockParticle;
 
 import javax.vecmath.Vector3d;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BedrockComponentExpireBlocks extends BedrockComponentBase
-{
+public abstract class BedrockComponentExpireBlocks extends BedrockComponentBase {
     public List<Block> blocks = new ArrayList<Block>();
 
-    private BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
     @Override
-    public BedrockComponentBase fromJson(JsonElement element, MolangParser parser) throws MolangException
-    {
-        if (element.isJsonArray())
-        {
-            for (JsonElement value : element.getAsJsonArray())
-            {
+    public BedrockComponentBase fromJson(JsonElement element, MolangParser parser) throws MolangException {
+        if (element.isJsonArray()) {
+            for (JsonElement value : element.getAsJsonArray()) {
                 ResourceLocation location = new ResourceLocation(value.getAsString());
                 Block block = ForgeRegistries.BLOCKS.getValue(location);
 
-                if (block != null)
-                {
+                if (block != null) {
                     this.blocks.add(block);
                 }
             }
@@ -44,16 +39,13 @@ public abstract class BedrockComponentExpireBlocks extends BedrockComponentBase
     }
 
     @Override
-    public JsonElement toJson()
-    {
+    public JsonElement toJson() {
         JsonArray array = new JsonArray();
 
-        for (Block block : this.blocks)
-        {
+        for (Block block : this.blocks) {
             ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(block);
 
-            if (rl != null)
-            {
+            if (rl != null) {
                 array.add(rl.toString());
             }
         }
@@ -61,10 +53,8 @@ public abstract class BedrockComponentExpireBlocks extends BedrockComponentBase
         return array;
     }
 
-    public Block getBlock(BedrockEmitter emitter, BedrockParticle particle)
-    {
-        if (emitter.world == null)
-        {
+    public Block getBlock(BedrockEmitter emitter, BedrockParticle particle) {
+        if (emitter.world == null) {
             return Blocks.AIR;
         }
 

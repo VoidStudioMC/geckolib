@@ -1,4 +1,4 @@
-package software.bernie.geckolib3.asm;
+package software.bernie.geckolib3.core.controller;
 
 import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
 
