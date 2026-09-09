@@ -104,17 +104,14 @@ public class BedrockEmitter {
     private Variable varEmitterRandom3;
     private Variable varEmitterRandom4;
 
+    private boolean looping;
+
     public boolean isFinished() {
         return !this.running && this.particles.isEmpty();
     }
 
     public boolean isLooping() {
-        for (BedrockComponentBase componentBase : scheme.components) {
-            if (componentBase instanceof BedrockComponentLifetimeLooping) {
-                return true;
-            }
-        }
-        return false;
+        return looping;
     }
 
     public void setLastLoop() {
@@ -159,6 +156,14 @@ public class BedrockEmitter {
 
         if (this.scheme == null) {
             return;
+        }
+
+        this.looping = false;
+        for (BedrockComponentBase c : scheme.components) {
+            if (c instanceof BedrockComponentLifetimeLooping) {
+                this.looping = true;
+                break;
+            }
         }
 
         if (variables != null) {

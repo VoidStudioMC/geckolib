@@ -25,12 +25,12 @@ import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
 import software.bernie.geckolib3.util.MatrixStack;
 import software.bernie.geckolib3.util.PositionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public interface IGeoRenderer<T> {
 	MatrixStack MATRIX_STACK = new MatrixStack();
+	Matrix4f ROTATION_MAT = new Matrix4f();
 
 	default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue,
 			float alpha) {
@@ -167,60 +167,69 @@ public interface IGeoRenderer<T> {
 
 	static void drawParticles(GeoModel model, Object animatableArg, float ticks) {
 		if (!(animatableArg instanceof IAnimatable)) {
-            return;
-        }
+			return;
+		}
 		IAnimatable animatable = (IAnimatable) animatableArg;
-		Map<String, AnimationController> controllerMap = animatable.getFactory().getOrCreateAnimationData(animatableArg.hashCode()).getAnimationControllers();
+		Map<String, AnimationController> controllerMap = animatable.getFactory()
+				.getOrCreateAnimationData(animatableArg.hashCode())
+				.getAnimationControllers();
+
+		if (controllerMap.isEmpty()) {
+			return;
+		}
+
 		for (AnimationController controller : controllerMap.values()) {
-			List<BedrockEmitter> emitters = ((IAdvController)controller).getEmitters();
+			List<BedrockEmitter> emitters = ((IAdvController) controller).getEmitters();
+			if (emitters.isEmpty()) {
+				continue;
+			}
 			for (BedrockEmitter emitter : emitters) {
-				String locator = emitter.locator + "_locator";
-				if (emitter.locator != null && model.getBone(locator).isPresent()) {
-					GeoBone bone = model.getBone(locator).get();
-					renderParticle(emitter, bone, ticks);
+				if (emitter.locator == null) {
+					continue;
 				}
+				model.getBone(emitter.locator + "_locator")
+						.ifPresent(bone -> renderParticle(emitter, bone, ticks));
 			}
 		}
 	}
 
 	static void renderParticle(BedrockEmitter emitter, GeoBone locator, float ticks) {
-		emitter.prevGlobal.x = emitter.lastGlobal.x;
-		emitter.prevGlobal.y = emitter.lastGlobal.y;
-		emitter.prevGlobal.z = emitter.lastGlobal.z;
+		Vector3d prev = emitter.prevGlobal;
+		Vector3d last = emitter.lastGlobal;
+		prev.x = last.x;
+		prev.y = last.y;
+		prev.z = last.z;
 
 		Vector3d position = PositionUtils.getCurrentRenderPos();
-		//Vector3d position = new Vector3d(0,0,0);
-		double posX = position.x;//-376.5;
-		double posY = position.y;//8;
-		double posZ = position.z;//569.5;
+		last.x = position.x;
+		last.y = position.y;
+		last.z = position.z;
 
-		emitter.lastGlobal.x = posX; //TODO
-		emitter.lastGlobal.y = posY; //TODO
-		emitter.lastGlobal.z = posZ; //TODO
 		RenderHelper.disableStandardItemLighting();
 
 		Matrix4f curRot = PositionUtils.getCurrentMatrix();
-
 		PositionUtils.setInitialWorldPos();
-
 		Matrix4f cur2 = PositionUtils.getCurrentRotation(curRot, PositionUtils.getCurrentMatrix());
 
 		emitter.rotation.setIdentity();
 
 		MATRIX_STACK.push();
-		MATRIX_STACK.getModelMatrix().mul(new Matrix4f(cur2.m00,cur2.m01,cur2.m02,0, cur2.m10,cur2.m11,cur2.m12,0,cur2.m20,cur2.m21,cur2.m22,0,0,0,0,1));
-		GeoBone[] bonePath = getPathFromRoot(locator);
-        for (GeoBone bone : bonePath) {
-            MATRIX_STACK.translate(bone);
-            MATRIX_STACK.moveToPivot(bone);
-            MATRIX_STACK.rotate(bone);
-            MATRIX_STACK.scale(bone);
-            MATRIX_STACK.moveBackFromPivot(bone);
-        }
+
+		ROTATION_MAT.setIdentity();
+		ROTATION_MAT.setElement(0, 0, cur2.m00);
+		ROTATION_MAT.setElement(0, 1, cur2.m01);
+		ROTATION_MAT.setElement(0, 2, cur2.m02);
+		ROTATION_MAT.setElement(1, 0, cur2.m10);
+		ROTATION_MAT.setElement(1, 1, cur2.m11);
+		ROTATION_MAT.setElement(1, 2, cur2.m12);
+		ROTATION_MAT.setElement(2, 0, cur2.m20);
+		ROTATION_MAT.setElement(2, 1, cur2.m21);
+		ROTATION_MAT.setElement(2, 2, cur2.m22);
+		MATRIX_STACK.getModelMatrix().mul(ROTATION_MAT);
+
+		applyBoneChainTransform(locator);
+
 		MATRIX_STACK.moveToPivot(locator);
-		//MATRIX_STACK.translate(6f/16f,16f/16f,0);
-		//MATRIX_STACK.rotateX((float) (Math.PI/2));
-		//MATRIX_STACK.scale(0.5f,0.5f,0.5f);
 
 		Matrix4f full = MATRIX_STACK.getModelMatrix();
 		emitter.rotation = new Matrix3f(full.m00, full.m01, full.m02, full.m10, full.m11, full.m12, full.m20, full.m21, full.m22);
@@ -230,15 +239,19 @@ public interface IGeoRenderer<T> {
 
 		MATRIX_STACK.pop();
 		emitter.render(Minecraft.getMinecraft().getRenderPartialTicks());
+		//emitter.running = emitter.sanityTicks < 2;
 		RenderHelper.enableStandardItemLighting();
 	}
 
-	static GeoBone[] getPathFromRoot(GeoBone bone) {
-		List<GeoBone> bones = new ArrayList<>();
-		while (bone != null) {
-			bones.add(0, bone);
-			bone = bone.parent;
+	static void applyBoneChainTransform(GeoBone bone) {
+		if (bone == null) {
+			return;
 		}
-		return bones.toArray(new GeoBone[0]);
+		applyBoneChainTransform(bone.parent);
+		MATRIX_STACK.translate(bone);
+		MATRIX_STACK.moveToPivot(bone);
+		MATRIX_STACK.rotate(bone);
+		MATRIX_STACK.scale(bone);
+		MATRIX_STACK.moveBackFromPivot(bone);
 	}
 }

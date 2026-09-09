@@ -5,15 +5,7 @@
 
 package software.bernie.geckolib3.core.controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -419,21 +411,39 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 				setLastTick(time);
 
 				List<BedrockEmitter> emitters = getEmitters();
-				for (int i = 0; i < emitters.size(); i++) {
-					BedrockEmitter emitter = emitters.get(i);
-					String name = emitter.scheme.name;
-					String loc = emitter.locator;
-					if (!emitter.scheme.toReload) {
-						emitters.get(i).update();
-					} else {
+				Iterator<BedrockEmitter> it = emitters.iterator();
+				List<BedrockEmitter> toAdd = null;
+
+				while (it.hasNext()) {
+					BedrockEmitter emitter = it.next();
+
+					if (emitter.scheme.toReload) {
+						String name = emitter.scheme.name;
+						String loc = emitter.locator;
+
 						emitter.stop();
-						emitter = new BedrockEmitter();
-						emitter.setScheme(BedrockLibrary.instance.get(name));
-						emitter.setTarget(Minecraft.getMinecraft().player);
-						emitter.locator = loc;
-						emitter.start();
-						emitters.set(i, emitter);
+						it.remove();
+
+						BedrockEmitter fresh = new BedrockEmitter();
+						fresh.setScheme(BedrockLibrary.instance.get(name));
+						fresh.setTarget(Minecraft.getMinecraft().player);
+						fresh.locator = loc;
+						fresh.start();
+
+						if (toAdd == null) toAdd = new ArrayList<>();
+						toAdd.add(fresh);
+						continue;
 					}
+
+					emitter.update();
+
+					if (!emitter.playing && emitter.particles.isEmpty()) {
+						it.remove();
+					}
+				}
+
+				if (toAdd != null) {
+					emitters.addAll(toAdd);
 				}
 			}
 		}
@@ -628,14 +638,6 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 		}
 		setAnimTime(parser, tick);
 
-		List<BedrockEmitter> emitters = getEmitters();
-		for (int i = 0; i < emitters.size(); i++) {
-			if (!emitters.get(i).playing && emitters.get(i).particles.isEmpty()) {
-				emitters.remove(i);
-				i--;
-			}
-		}
-
 		// Loop through every boneanimation in the current animation and process the
 		// values
 		List<BoneAnimation> boneAnimations = currentAnimation.boneAnimations;
@@ -698,7 +700,7 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 
 		for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
 			if (!this.executedKeyFrames.contains(particleEventKeyFrame)
-					&& tick >= particleEventKeyFrame.getStartTick() || hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
+					&& tick >= particleEventKeyFrame.getStartTick() && !hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
 				ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
 						particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
 						this);
