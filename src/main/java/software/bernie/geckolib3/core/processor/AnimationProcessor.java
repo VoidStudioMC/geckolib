@@ -26,15 +26,18 @@ public class AnimationProcessor<T extends IAnimatable> {
 	public boolean reloadAnimations = false;
 	private final List<IBone> modelRendererList = new ArrayList<>();
 	private double lastTickValue = -1;
-	private Set<Integer> animatedEntities = new HashSet<>();
+	private final Set<Integer> animatedEntities = new HashSet<>();
 	private final IAnimatableModel animatedModel;
+
+	private final Map<String, IBone> boneCache = new HashMap<>();
+	private HashMap<String, DirtyTracker> dirtyTrackerCache;
 
 	public AnimationProcessor(IAnimatableModel animatedModel) {
 		this.animatedModel = animatedModel;
 	}
 
 	public void tickAnimation(IAnimatable entity, Integer uniqueID, double seekTime, AnimationEvent event,
-			MolangParser parser, boolean crashWhenCantFindBone) {
+							  MolangParser parser, boolean crashWhenCantFindBone) {
 		if (seekTime != lastTickValue) {
 			animatedEntities.clear();
 		} else if (animatedEntities.contains(uniqueID)) { // Entity already animated on this tick
@@ -73,7 +76,8 @@ public class AnimationProcessor<T extends IAnimatable> {
 			// Loop through every single bone and lerp each property
 			for (BoneAnimationQueue boneAnimation : controller.getBoneAnimationQueues().values()) {
 				IBone bone = boneAnimation.bone;
-				BoneSnapshot snapshot = boneSnapshots.get(bone.getName()).getRight();
+				Pair<IBone, BoneSnapshot> snapshotPair = boneSnapshots.get(bone.getName());
+				BoneSnapshot snapshot = snapshotPair.getRight();
 				BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
 
 				AnimationPoint rXPoint = boneAnimation.rotationXQueue.poll();
@@ -151,21 +155,23 @@ public class AnimationProcessor<T extends IAnimatable> {
 		this.reloadAnimations = false;
 
 		double resetTickLength = manager.getResetSpeed();
-		for (Map.Entry<String, DirtyTracker> tracker : modelTracker.entrySet()) {
-			IBone model = tracker.getValue().model;
+		for (Map.Entry<String, DirtyTracker> entry : modelTracker.entrySet()) {
+			DirtyTracker dirtyTracker = entry.getValue();
+			IBone model = dirtyTracker.model;
 			BoneSnapshot initialSnapshot = model.getInitialSnapshot();
-			BoneSnapshot saveSnapshot = boneSnapshots.get(tracker.getKey()).getRight();
-			if (saveSnapshot == null) {
+			Pair<IBone, BoneSnapshot> snapshotPair = boneSnapshots.get(entry.getKey());
+			if (snapshotPair == null) {
 				if (crashWhenCantFindBone) {
 					throw new RuntimeException(
-							"Could not find save snapshot for bone: " + tracker.getValue().model.getName()
+							"Could not find save snapshot for bone: " + model.getName()
 									+ ". Please don't add bones that are used in an animation at runtime.");
 				} else {
 					continue;
 				}
 			}
+			BoneSnapshot saveSnapshot = snapshotPair.getRight();
 
-			if (!tracker.getValue().hasRotationChanged) {
+			if (!dirtyTracker.hasRotationChanged) {
 				if (saveSnapshot.isCurrentlyRunningRotationAnimation) {
 					saveSnapshot.mostRecentResetRotationTick = (float) seekTime;
 					saveSnapshot.isCurrentlyRunningRotationAnimation = false;
@@ -187,7 +193,7 @@ public class AnimationProcessor<T extends IAnimatable> {
 					saveSnapshot.rotationValueZ = model.getRotationZ();
 				}
 			}
-			if (!tracker.getValue().hasPositionChanged) {
+			if (!dirtyTracker.hasPositionChanged) {
 				if (saveSnapshot.isCurrentlyRunningPositionAnimation) {
 					saveSnapshot.mostRecentResetPositionTick = (float) seekTime;
 					saveSnapshot.isCurrentlyRunningPositionAnimation = false;
@@ -209,7 +215,7 @@ public class AnimationProcessor<T extends IAnimatable> {
 					saveSnapshot.positionOffsetZ = model.getPositionZ();
 				}
 			}
-			if (!tracker.getValue().hasScaleChanged) {
+			if (!dirtyTracker.hasScaleChanged) {
 				if (saveSnapshot.isCurrentlyRunningScaleAnimation) {
 					saveSnapshot.mostRecentResetScaleTick = (float) seekTime;
 					saveSnapshot.isCurrentlyRunningScaleAnimation = false;
@@ -231,7 +237,7 @@ public class AnimationProcessor<T extends IAnimatable> {
 					saveSnapshot.scaleValueZ = model.getScaleZ();
 				}
 			}
-			if (!tracker.getValue().hasOpacityChanged) {
+			if (!dirtyTracker.hasOpacityChanged) {
 				if (saveSnapshot.isCurrentlyRunningOpacityAnimation) {
 					saveSnapshot.mostRecentResetOpacityTick = (float) seekTime;
 					saveSnapshot.isCurrentlyRunningOpacityAnimation = false;
@@ -252,18 +258,31 @@ public class AnimationProcessor<T extends IAnimatable> {
 	}
 
 	private HashMap<String, DirtyTracker> createNewDirtyTracker() {
-		HashMap<String, DirtyTracker> tracker = new HashMap<>();
-		for (IBone bone : modelRendererList) {
-			tracker.put(bone.getName(), new DirtyTracker(false, false, false, false, bone));
+		if (dirtyTrackerCache == null) {
+			dirtyTrackerCache = new HashMap<>(modelRendererList.size());
+			for (IBone bone : modelRendererList) {
+				dirtyTrackerCache.put(bone.getName(), new DirtyTracker(false, false, false, false, bone));
+			}
+			return dirtyTrackerCache;
 		}
-		return tracker;
+
+		for (DirtyTracker tracker : dirtyTrackerCache.values()) {
+			tracker.hasRotationChanged = false;
+			tracker.hasPositionChanged = false;
+			tracker.hasScaleChanged = false;
+			tracker.hasOpacityChanged = false;
+		}
+		return dirtyTrackerCache;
 	}
 
 	private void updateBoneSnapshots(HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
+		if (boneSnapshotCollection.size() == modelRendererList.size()) {
+			return;
+		}
+
 		for (IBone bone : modelRendererList) {
-			if (!boneSnapshotCollection.containsKey(bone.getName())) {
-				boneSnapshotCollection.put(bone.getName(), Pair.of(bone, new BoneSnapshot(bone.getInitialSnapshot())));
-			}
+			boneSnapshotCollection.computeIfAbsent(bone.getName(),
+					key -> Pair.of(bone, new BoneSnapshot(bone.getInitialSnapshot())));
 		}
 	}
 
@@ -274,7 +293,7 @@ public class AnimationProcessor<T extends IAnimatable> {
 	 * @return the bone
 	 */
 	public IBone getBone(String boneName) {
-		return modelRendererList.stream().filter(x -> x.getName().equals(boneName)).findFirst().orElse(null);
+		return boneCache.get(boneName);
 	}
 
 	/**
@@ -286,10 +305,14 @@ public class AnimationProcessor<T extends IAnimatable> {
 	public void registerModelRenderer(IBone modelRenderer) {
 		modelRenderer.saveInitialSnapshot();
 		modelRendererList.add(modelRenderer);
+		boneCache.put(modelRenderer.getName(), modelRenderer);
+		dirtyTrackerCache = null;
 	}
 
 	public void clearModelRendererList() {
 		this.modelRendererList.clear();
+		this.boneCache.clear();
+		this.dirtyTrackerCache = null;
 	}
 
 	public List<IBone> getModelRendererList() {

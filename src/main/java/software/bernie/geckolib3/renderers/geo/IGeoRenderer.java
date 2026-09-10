@@ -18,8 +18,6 @@ import software.bernie.geckolib3.core.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoCube;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
-import software.bernie.geckolib3.geo.render.built.GeoQuad;
-import software.bernie.geckolib3.geo.render.built.GeoVertex;
 import software.bernie.geckolib3.model.provider.GeoModelProvider;
 import software.bernie.geckolib3.particles.emitter.BedrockEmitter;
 import software.bernie.geckolib3.util.MatrixStack;
@@ -32,8 +30,13 @@ public interface IGeoRenderer<T> {
 	MatrixStack MATRIX_STACK = new MatrixStack();
 	Matrix4f ROTATION_MAT = new Matrix4f();
 
-	default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue,
-			float alpha) {
+	Vector3f TEMP_NORMAL = new Vector3f();
+	Vector4f TEMP_VERTEX = new Vector4f();
+
+	CubeRenderBuffer OPAQUE_BUFFER = new CubeRenderBuffer();
+	CubeRenderBuffer TRANSPARENT_BUFFER = new CubeRenderBuffer();
+
+	default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue, float alpha) {
 		//GlStateManager.enableCull();
 		GlStateManager.enableRescaleNormal();
 		renderEarly(animatable, partialTicks, red, green, blue, alpha);
@@ -44,19 +47,26 @@ public interface IGeoRenderer<T> {
 		GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		BufferBuilder builder = Tessellator.getInstance().getBuffer();
 
+		OPAQUE_BUFFER.reset();
+		TRANSPARENT_BUFFER.reset();
+
+		for (GeoBone group : model.topLevelBones) {
+			collectRenderCommands(group, red, green, blue, alpha);
+		}
+
 		// Pass 1: Render opaque bones with depth writing
 		GlStateManager.depthMask(true);
 		builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-		for (GeoBone group : model.topLevelBones) {
-			renderRecursively(builder, group, red, green, blue, alpha, true);
+		for (int i = 0; i < OPAQUE_BUFFER.count; i++) {
+			OPAQUE_BUFFER.commands.get(i).render(builder, TEMP_NORMAL, TEMP_VERTEX);
 		}
 		Tessellator.getInstance().draw();
 
 		// Pass 2: Render transparent bones without depth writing so they don't occlude
 		GlStateManager.depthMask(false);
 		builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-		for (GeoBone group : model.topLevelBones) {
-			renderRecursively(builder, group, red, green, blue, alpha, false);
+		for (int i = 0; i < TRANSPARENT_BUFFER.count; i++) {
+			TRANSPARENT_BUFFER.commands.get(i).render(builder, TEMP_NORMAL, TEMP_VERTEX);
 		}
 		Tessellator.getInstance().draw();
 
@@ -67,13 +77,7 @@ public interface IGeoRenderer<T> {
 		GlStateManager.disableRescaleNormal();
 	}
 
-	default void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue,
-			float alpha) {
-		renderRecursively(builder, bone, red, green, blue, alpha, true);
-	}
-
-	default void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue,
-			float alpha, boolean opaquePass) {
+	default void collectRenderCommands(GeoBone bone, float red, float green, float blue, float alpha) {
 		float boneAlpha = alpha * bone.getAlpha();
 		if (boneAlpha <= 0) {
 			return;
@@ -88,59 +92,31 @@ public interface IGeoRenderer<T> {
 		MATRIX_STACK.moveBackFromPivot(bone);
 
 		boolean isTransparent = boneAlpha < 1;
-		boolean renderCubes = opaquePass != isTransparent;
+		CubeRenderBuffer targetBuffer = isTransparent ? TRANSPARENT_BUFFER : OPAQUE_BUFFER;
 
-		if (renderCubes && !bone.isHidden()) {
+		if (!bone.isHidden()) {
 			for (GeoCube cube : bone.childCubes) {
 				MATRIX_STACK.push();
-				GlStateManager.pushMatrix();
-				renderCube(builder, cube, red, green, blue, boneAlpha);
-				GlStateManager.popMatrix();
+				collectCubeCommand(targetBuffer, cube, red, green, blue, boneAlpha);
 				MATRIX_STACK.pop();
 			}
 		}
 		if (!bone.childBonesAreHiddenToo()) {
 			for (GeoBone childBone : bone.childBones) {
-				renderRecursively(builder, childBone, red, green, blue, boneAlpha, opaquePass);
+				collectRenderCommands(childBone, red, green, blue, boneAlpha);
 			}
 		}
 
 		MATRIX_STACK.pop();
 	}
 
-	default void renderCube(BufferBuilder builder, GeoCube cube, float red, float green, float blue, float alpha) {
+	default void collectCubeCommand(CubeRenderBuffer buffer, GeoCube cube, float red, float green, float blue, float alpha) {
 		MATRIX_STACK.moveToPivot(cube);
 		MATRIX_STACK.rotate(cube);
 		MATRIX_STACK.moveBackFromPivot(cube);
 
-		for (GeoQuad quad : cube.quads) {
-			Vector3f normal = new Vector3f(quad.normal.getX(), quad.normal.getY(), quad.normal.getZ());
-
-			MATRIX_STACK.getNormalMatrix().transform(normal);
-
-			/*
-			 * Fix shading dark shading for flat cubes + compatibility wish Optifine shaders
-			 */
-			if ((cube.size.y == 0 || cube.size.z == 0) && normal.getX() < 0) {
-				normal.x *= -1;
-			}
-			if ((cube.size.x == 0 || cube.size.z == 0) && normal.getY() < 0) {
-				normal.y *= -1;
-			}
-			if ((cube.size.x == 0 || cube.size.y == 0) && normal.getZ() < 0) {
-				normal.z *= -1;
-			}
-
-			for (GeoVertex vertex : quad.vertices) {
-				Vector4f vector4f = new Vector4f(vertex.position.getX(), vertex.position.getY(), vertex.position.getZ(),
-						1.0F);
-
-				MATRIX_STACK.getModelMatrix().transform(vector4f);
-
-				builder.pos(vector4f.getX(), vector4f.getY(), vector4f.getZ()).tex(vertex.textureU, vertex.textureV)
-						.color(red, green, blue, alpha).normal(normal.getX(), normal.getY(), normal.getZ()).endVertex();
-			}
-		}
+		CubeRenderCommand command = buffer.next();
+		command.set(cube, MATRIX_STACK.getModelMatrix(), MATRIX_STACK.getNormalMatrix(), red, green, blue, alpha);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -187,10 +163,21 @@ public interface IGeoRenderer<T> {
 				if (emitter.locator == null) {
 					continue;
 				}
-				model.getBone(emitter.locator + "_locator")
-						.ifPresent(bone -> renderParticle(emitter, bone, ticks));
+
+				GeoBone bone = resolveLocatorBone(model, emitter);
+				if (bone != null) {
+					renderParticle(emitter, bone, ticks);
+				}
 			}
 		}
+	}
+
+	static GeoBone resolveLocatorBone(GeoModel model, BedrockEmitter emitter) {
+		if (emitter.cachedLocatorBone == null || !emitter.locator.equals(emitter.cachedLocatorName)) {
+			emitter.cachedLocatorName = emitter.locator;
+			emitter.cachedLocatorBone = model.getBone(emitter.locator + "_locator").orElse(null);
+		}
+		return emitter.cachedLocatorBone;
 	}
 
 	static void renderParticle(BedrockEmitter emitter, GeoBone locator, float ticks) {
@@ -239,7 +226,6 @@ public interface IGeoRenderer<T> {
 
 		MATRIX_STACK.pop();
 		emitter.render(Minecraft.getMinecraft().getRenderPartialTicks());
-		//emitter.running = emitter.sanityTicks < 2;
 		RenderHelper.enableStandardItemLighting();
 	}
 

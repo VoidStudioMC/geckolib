@@ -14,6 +14,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
+import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.mclib.utils.resources.GifTexture;
 import software.bernie.geckolib3.particles.BedrockScheme;
 import software.bernie.geckolib3.particles.components.*;
@@ -105,6 +106,9 @@ public class BedrockEmitter {
     private Variable varEmitterRandom4;
 
     private boolean looping;
+
+    public GeoBone cachedLocatorBone;
+    public String cachedLocatorName;
 
     public boolean isFinished() {
         return !this.running && this.particles.isEmpty();
