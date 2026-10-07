@@ -30,9 +30,9 @@ public class BedrockSchemeJsonAdapter implements JsonDeserializer<BedrockScheme>
 
     public static boolean isEmpty(JsonElement element) {
         if (element.isJsonArray()) {
-            return element.getAsJsonArray().isEmpty();
+            return element.getAsJsonArray().size() == 0;
         } else if (element.isJsonObject()) {
-            return element.getAsJsonObject().isEmpty();
+            return element.getAsJsonObject().entrySet().isEmpty();
         } else if (element.isJsonPrimitive()) {
             JsonPrimitive primitive = element.getAsJsonPrimitive();
 

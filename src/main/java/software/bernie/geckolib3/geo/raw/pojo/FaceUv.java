@@ -87,21 +87,21 @@ public class FaceUv {
 
 		public static Rotation fromValue(int value) {
 			int index = ((value % 360) + 360) % 360 / 90;
-            return switch (index) {
-                case 1 -> CLOCKWISE_90;
-                case 2 -> CLOCKWISE_180;
-                case 3 -> CLOCKWISE_270;
-                default -> NONE;
-            };
+			switch (index) {
+				case 1: return CLOCKWISE_90;
+                case 2: return CLOCKWISE_180;
+                case 3: return CLOCKWISE_270;
+                default: return NONE;
+            }
 		}
 
 		public float[] rotateUvs(float u, float v, float u2, float v2) {
-            return switch (this) {
-                case CLOCKWISE_90 -> new float[]{u2, v, u2, v2, u, v2, u, v};
-                case CLOCKWISE_180 -> new float[]{u2, v2, u, v2, u, v, u2, v};
-                case CLOCKWISE_270 -> new float[]{u, v2, u, v, u2, v, u2, v2};
-                default -> new float[]{u, v, u2, v, u2, v2, u, v2};
-            };
+            switch (this) {
+                case CLOCKWISE_90: return new float[]{u2, v, u2, v2, u, v2, u, v};
+                case CLOCKWISE_180: return new float[]{u2, v2, u, v2, u, v, u2, v};
+                case CLOCKWISE_270: return new float[]{u, v2, u, v, u2, v, u2, v2};
+                default: return new float[]{u, v, u2, v, u2, v2, u, v2};
+            }
 		}
 	}
 }

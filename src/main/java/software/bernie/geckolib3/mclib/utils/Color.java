@@ -114,8 +114,8 @@ public class Color implements ICopy<Color> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Color color) {
-
+        if (obj instanceof Color) {
+            Color color = (Color) obj;
             return color.getRGBAColor() == this.getRGBAColor();
         }
 

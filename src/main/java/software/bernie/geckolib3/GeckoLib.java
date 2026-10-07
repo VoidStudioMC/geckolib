@@ -14,7 +14,7 @@ public class GeckoLib {
 	public static final Logger LOGGER = LogManager.getLogger();
 	public static final String ModID = "geckolib3";
 	public static boolean hasInitialized;
-	public static final String VERSION = Reference.VERSION;
+	public static final String VERSION = "3.2.1";
 
 	/**
 	 * This method MUST be called in your mod's constructor or during

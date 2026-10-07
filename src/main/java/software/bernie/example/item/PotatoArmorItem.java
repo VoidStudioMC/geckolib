@@ -37,7 +37,7 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 		// This is all the extradata this event carries. The livingentity is the entity
 		// that's wearing the armor. The itemstack and equipmentslottype are self
 		// explanatory.
-		EntityLivingBase livingEntity = event.getExtraDataOfType(EntityLivingBase.class).getFirst();
+		EntityLivingBase livingEntity = event.getExtraDataOfType(EntityLivingBase.class).get(0);
 
 		// Always loop the animation but later on in this method we'll decide whether or
 		// not to actually play it
@@ -50,7 +50,8 @@ public class PotatoArmorItem extends GeoArmorItem implements IAnimatable {
 
 		// The entity is a player, so we want to only play if the player is wearing the
 		// full set of armor
-		else if (livingEntity instanceof EntityPlayerSP client) {
+		else if (livingEntity instanceof EntityPlayerSP) {
+			EntityPlayerSP client = (EntityPlayerSP) livingEntity;
 
             // Get all the equipment, aka the armor, currently held item, and offhand item
 			List<Item> equipmentList = new ArrayList<>();

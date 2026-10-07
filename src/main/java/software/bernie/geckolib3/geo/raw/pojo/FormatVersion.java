@@ -10,20 +10,21 @@ public enum FormatVersion {
 
 	@JsonValue
 	public String toValue() {
-        return switch (this) {
-            case VERSION_1_12_0 -> "1.12.0";
-			case VERSION_1_12_2 -> "1.12.2";
-            case VERSION_1_14_0 -> "1.14.0";
-        };
+        switch (this) {
+            case VERSION_1_12_0: return "1.12.0";
+			case VERSION_1_12_2: return "1.12.2";
+            case VERSION_1_14_0: return "1.14.0";
+            default: throw new IllegalStateException("Unexpected value: " + this);
+        }
     }
 
 	@JsonCreator
 	public static FormatVersion forValue(String value) throws IOException {
-		return switch (value) {
-            case "1.12.0" -> VERSION_1_12_0;
-            case "1.12.2" -> VERSION_1_12_2;
-            case "1.14.0" -> VERSION_1_14_0;
-            default -> throw new IOException("Cannot deserialize FormatVersion");
-        };
+        switch (value) {
+            case "1.12.0": return VERSION_1_12_0;
+            case "1.12.2": return VERSION_1_12_2;
+            case "1.14.0": return VERSION_1_14_0;
+            default: throw new IOException("Cannot deserialize FormatVersion");
+        }
     }
 }

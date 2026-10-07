@@ -74,8 +74,8 @@ public class BedrockComponentInitialization extends BedrockComponentBase impleme
     }
 
     private void cacheInitialValues(MolangExpression e, BedrockEmitter emitter) {
-        if (e instanceof MolangMultiStatement statement) {
-
+        if (e instanceof MolangMultiStatement) {
+            MolangMultiStatement statement = (MolangMultiStatement) e;
             for (MolangExpression expression : statement.expressions) {
                 if (expression instanceof MolangAssignment) {
                     this.cacheInitialValue((MolangAssignment) expression, emitter);

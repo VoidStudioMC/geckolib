@@ -24,7 +24,7 @@ public abstract class AbstractDirWatcher extends Thread {
 
     private void registerAll(final Path start) {
         try {
-            Files.walkFileTree(start, new SimpleFileVisitor<>() {
+            Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     register(dir);

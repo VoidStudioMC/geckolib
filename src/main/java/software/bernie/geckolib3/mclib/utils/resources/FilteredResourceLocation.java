@@ -88,8 +88,8 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
             return true;
         }
 
-        if (obj instanceof FilteredResourceLocation frl) {
-
+        if (obj instanceof FilteredResourceLocation) {
+            FilteredResourceLocation frl = (FilteredResourceLocation) obj;
             return Objects.equals(this.path, frl.path)
                     && this.autoSize == frl.autoSize
                     && this.sizeW == frl.sizeW

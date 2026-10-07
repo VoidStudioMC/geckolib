@@ -173,6 +173,7 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 	protected boolean needsAnimationReload = false;
 	public double animationSpeed = 1D;
 	private final Set<EventKeyFrame<?>> executedKeyFrames = new HashSet<>();
+	private final Map<String, Set<String>> loopingParticleLocators = new HashMap<>();
 
 	public final List<BedrockEmitter> emitters = new ArrayList<>();
 	public long lastTick;
@@ -494,19 +495,25 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 			}
 			if (currentAnimation != null) {
 				setAnimTime(parser, 0);
+
+				Map<String, IBone> boneLookup = new HashMap<>(modelRendererList.size());
+				for (IBone bone : modelRendererList) {
+					boneLookup.put(bone.getName(), bone);
+				}
+
 				for (BoneAnimation boneAnimation : currentAnimation.boneAnimations) {
 					BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneAnimation.boneName);
 					BoneSnapshot boneSnapshot = this.boneSnapshots.get(boneAnimation.boneName);
-					Optional<IBone> first = modelRendererList.stream()
-							.filter(x -> x.getName().equals(boneAnimation.boneName)).findFirst();
-					if (first.isEmpty()) {
+
+					IBone bone = boneLookup.get(boneAnimation.boneName);
+					if (bone == null) {
 						if (crashWhenCantFindBone) {
 							throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
 						} else {
 							continue;
 						}
 					}
-					BoneSnapshot initialSnapshot = first.get().getInitialSnapshot();
+					BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
 					assert boneSnapshot != null : "Bone snapshot was null";
 
 					VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
@@ -594,11 +601,19 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 	// rotation, position, and scale values as the initial value to lerp from
 	private void saveSnapshotsForAnimation(Animation animation,
 			HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
+		if (animation == null || animation.boneAnimations == null) {
+			return;
+		}
+
+		Set<String> animatedBoneNames = new HashSet<>(animation.boneAnimations.size());
+		for (BoneAnimation boneAnimation : animation.boneAnimations) {
+			animatedBoneNames.add(boneAnimation.boneName);
+		}
+
 		for (Pair<IBone, BoneSnapshot> snapshot : boneSnapshotCollection.values()) {
-			if (animation != null && animation.boneAnimations != null) {
-				if (animation.boneAnimations.stream().anyMatch(x -> x.boneName.equals(snapshot.getLeft().getName()))) {
-					this.boneSnapshots.put(snapshot.getLeft().getName(), new BoneSnapshot(snapshot.getRight()));
-				}
+			String boneName = snapshot.getLeft().getName();
+			if (animatedBoneNames.contains(boneName)) {
+				this.boneSnapshots.put(boneName, new BoneSnapshot(snapshot.getRight()));
 			}
 		}
 	}
@@ -698,9 +713,14 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 			}
 		}
 
+		if (!currentAnimation.particleKeyFrames.isEmpty()) {
+			refreshLoopingParticleLocators();
+		}
+
 		for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
 			if (!this.executedKeyFrames.contains(particleEventKeyFrame)
-					&& tick >= particleEventKeyFrame.getStartTick() && !hasParticleOnLoc(this, particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
+					&& tick >= particleEventKeyFrame.getStartTick()
+					&& !hasParticleOnLocCached(particleEventKeyFrame.effect, particleEventKeyFrame.locator)) {
 				ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
 						particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
 						this);
@@ -734,9 +754,11 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 
 	// Helper method to populate all the initial animation point queues
 	private void createInitialQueues(List<IBone> modelRendererList) {
-		boneAnimationQueues.clear();
-		for (IBone modelRenderer : modelRendererList) {
-			boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
+		if (boneAnimationQueues.size() != modelRendererList.size()) {
+			boneAnimationQueues.clear();
+			for (IBone modelRenderer : modelRendererList) {
+				boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
+			}
 		}
 	}
 
@@ -797,7 +819,7 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 				return new KeyFrameLocation<>(frame, tick);
 			}
 		}
-		return new KeyFrameLocation<>(frames.getLast(), ageInTicks);
+		return new KeyFrameLocation<>(frames.get(frames.size() - 1), ageInTicks);
 	}
 
 	private void resetEventKeyFrames() {
@@ -820,15 +842,18 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 		this.animationSpeed = animationSpeed;
 	}
 
-	public static boolean hasParticleOnLoc(AnimationController controller, String effect, String locator) {
-		List<BedrockEmitter> emitters = ((IAdvController) controller).getEmitters();
+	private void refreshLoopingParticleLocators() {
+		loopingParticleLocators.clear();
 		for (BedrockEmitter emitter : emitters) {
-			if (emitter.scheme != null && emitter.scheme.name != null && emitter.scheme.name.equals(effect) &&
-					emitter.locator != null && emitter.locator.equals(locator) && emitter.isLooping()) {
-				return true;
+			if (emitter.scheme != null && emitter.scheme.name != null && emitter.locator != null && emitter.isLooping()) {
+				loopingParticleLocators.computeIfAbsent(emitter.scheme.name, k -> new HashSet<>()).add(emitter.locator);
 			}
 		}
-		return false;
+	}
+
+	private boolean hasParticleOnLocCached(String effect, String locator) {
+		Set<String> locators = loopingParticleLocators.get(effect);
+		return locators != null && locators.contains(locator);
 	}
 
 	public static void processBedrockParticleEvent(AnimationController controller, ParticleKeyFrameEvent event) {

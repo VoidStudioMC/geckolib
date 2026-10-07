@@ -145,7 +145,8 @@ public class AdvMolangParser extends MolangParser {
             List<Object> symbols = this.breakdownChars(this.breakdown(expression));
 
             /* Assignment it is */
-            if (symbols.size() >= 3 && symbols.get(0) instanceof String name && this.isVariable(symbols.get(0)) && symbols.get(1).equals("=")) {
+            if (symbols.size() >= 3 && symbols.get(0) instanceof String && this.isVariable(symbols.get(0)) && symbols.get(1).equals("=")) {
+                String name = (String) symbols.get(0);
                 symbols = symbols.subList(2, symbols.size());
 
                 Variable variable = null;

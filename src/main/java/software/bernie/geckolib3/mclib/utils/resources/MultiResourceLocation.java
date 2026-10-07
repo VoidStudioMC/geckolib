@@ -101,8 +101,8 @@ public class MultiResourceLocation extends ResourceLocation implements IWritable
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof MultiResourceLocation multi) {
-
+        if (obj instanceof MultiResourceLocation) {
+            MultiResourceLocation multi = (MultiResourceLocation) obj;
             return Objects.equal(this.children, multi.children);
         }
 

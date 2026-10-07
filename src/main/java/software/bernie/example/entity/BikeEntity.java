@@ -72,7 +72,7 @@ public class BikeEntity extends EntityAnimal implements IAnimatable {
 
 	@Nullable
 	public Entity getControllingPassenger() {
-		return this.getPassengers().isEmpty() ? null : this.getPassengers().getFirst();
+		return this.getPassengers().isEmpty() ? null : this.getPassengers().get(0);
 	}
 
 	@Override

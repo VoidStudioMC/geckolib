@@ -45,7 +45,8 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
 		implements IGeoRenderer<T> {
 	static {
 		AnimationController.addModelFetcher((IAnimatable object) -> {
-			if (object instanceof Entity entity) {
+			if (object instanceof Entity) {
+				Entity entity = (Entity) object;
 				return (IAnimatableModel<Object>) AnimationUtils.getGeoModelForEntity(entity);
 			}
 			return null;
@@ -76,7 +77,8 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
 		float f = Interpolations.lerpYaw(entity.prevRenderYawOffset, entity.renderYawOffset, partialTicks);
 		float f1 = Interpolations.lerpYaw(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
 		float netHeadYaw = f1 - f;
-		if (shouldSit && entity.getRidingEntity() instanceof EntityLivingBase livingentity) {
+		if (shouldSit && entity.getRidingEntity() instanceof EntityLivingBase) {
+			EntityLivingBase livingentity = (EntityLivingBase) entity.getRidingEntity();
             f = Interpolations.lerpYaw(livingentity.prevRenderYawOffset, livingentity.renderYawOffset, partialTicks);
 			netHeadYaw = f1 - f;
 			float f3 = MathHelper.wrapDegrees(netHeadYaw);

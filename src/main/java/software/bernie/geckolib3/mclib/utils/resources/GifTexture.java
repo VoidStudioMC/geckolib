@@ -31,8 +31,8 @@ public class GifTexture extends AbstractTexture {
         if (location.getPath().endsWith("gif")) {
             ITextureObject object = textures.getTexture(location);
 
-            if (object instanceof GifTexture texture) {
-
+            if (object instanceof GifTexture) {
+                GifTexture texture = (GifTexture) object;
                 location = texture.getFrame(ticks, partialTicks);
             }
         }

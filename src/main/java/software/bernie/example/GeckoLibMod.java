@@ -44,7 +44,7 @@ import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
 import java.io.File;
 
-@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION, dependencies = "required-after:cleanroom@[0.3.31-alpha,);")
+@Mod(modid = GeckoLib.ModID, version = GeckoLib.VERSION)
 public class GeckoLibMod {
 	private static CreativeTabs geckolibItemGroup;
 	public static BedrockLibrary particleLibraryInstance;

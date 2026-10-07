@@ -25,7 +25,8 @@ public abstract class GeoBlockRenderer<T extends TileEntity & IAnimatable> exten
 		implements IGeoRenderer<T> {
 	static {
 		AnimationController.addModelFetcher((IAnimatable object) -> {
-			if (object instanceof TileEntity tile) {
+			if (object instanceof TileEntity) {
+				TileEntity tile = (TileEntity) object;
                 TileEntitySpecialRenderer<TileEntity> renderer = TileEntityRendererDispatcher.instance
 						.getRenderer(tile);
 				if (renderer instanceof GeoBlockRenderer) {

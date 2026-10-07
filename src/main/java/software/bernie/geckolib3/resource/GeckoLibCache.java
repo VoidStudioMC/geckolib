@@ -2,6 +2,7 @@ package software.bernie.geckolib3.resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -13,12 +14,7 @@ import java.util.zip.ZipFile;
 
 import com.eliotlash.molang.MolangParser;
 
-import net.minecraft.client.resources.FileResourcePack;
-import net.minecraft.client.resources.FolderResourcePack;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
-import net.minecraft.client.resources.IResourcePack;
-import net.minecraft.client.resources.LegacyV2Adapter;
+import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.FMLFolderResourcePack;
@@ -81,7 +77,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 		GeckoLib.LOGGER.info("Reloading GeckoLib caches...");
 		HashMap<ResourceLocation, AnimationFile> tempAnimations = new HashMap<>();
 		HashMap<ResourceLocation, GeoModel> tempModels = new HashMap<>();
-		List<IResourcePack> packs = FMLClientHandler.instance().getResourcePackList();
+		List<IResourcePack> packs = getPacks();
 
 		if (packs == null) {
 			return;
@@ -119,16 +115,49 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 		geoModels = tempModels;
 	}
 
+	@SuppressWarnings("unchecked")
+	private List<IResourcePack> getPacks() {
+		try {
+			Field field = FMLClientHandler.class.getDeclaredField("resourcePackList");
+			field.setAccessible(true);
+			return (List<IResourcePack>) field.get(FMLClientHandler.instance());
+		} catch (Exception e) {
+			GeckoLib.LOGGER.error("Error accessing resource pack list!", e);
+		}
+
+		return null;
+	}
+
     private List<ResourceLocation> getLocations(IResourcePack pack, String folder, Predicate<String> predicate) {
-		if (pack instanceof LegacyV2Adapter adapter) {
-            return this.getLocations(adapter.getUnadaptedPack(), folder, predicate);
+		if (pack instanceof LegacyV2Adapter) {
+			LegacyV2Adapter adapter = (LegacyV2Adapter) pack;
+			Field packField = null;
+
+			for (Field field : adapter.getClass().getDeclaredFields()) {
+				if (field.getType() == IResourcePack.class) {
+					packField = field;
+
+					break;
+				}
+			}
+
+			if (packField != null) {
+				packField.setAccessible(true);
+
+				try {
+					return this.getLocations((IResourcePack) packField.get(adapter), folder, predicate);
+				} catch (Exception e) {
+				}
+			}
 		}
 
 		List<ResourceLocation> locations = new ArrayList<>();
 
-		if (pack instanceof FolderResourcePack folderResourcePack) {
+		if (pack instanceof FolderResourcePack) {
+			FolderResourcePack folderResourcePack = (FolderResourcePack) pack;
 			this.handleFolderResourcePack(folderResourcePack, folder, predicate, locations);
-		} else if (pack instanceof FileResourcePack fileResourcePack) {
+		} else if (pack instanceof FileResourcePack) {
+			FileResourcePack fileResourcePack = (FileResourcePack) pack;
 			this.handleZipResourcePack(fileResourcePack, folder, predicate, locations);
 		}
 
@@ -139,20 +168,37 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	private void handleFolderResourcePack(FolderResourcePack folderPack, String folder, Predicate<String> predicate,
 			List<ResourceLocation> locations) {
-        File file = folderPack.getResourcePackFile();
-        Set<String> domains = folderPack.getResourceDomains();
+		Field fileField = null;
 
-        if (folderPack instanceof FMLFolderResourcePack fmlFolderResourcePack) {
-            domains.add(fmlFolderResourcePack.getFMLContainer().getModId());
-        }
+		for (Field field : AbstractResourcePack.class.getDeclaredFields()) {
+			if (field.getType() == File.class) {
+				fileField = field;
 
-        for (String domain : domains) {
-            String prefix = "assets/" + domain + "/" + folder;
-            File pathFile = new File(file, prefix);
+				break;
+			}
+		}
 
-            this.enumerateFiles(folderPack, pathFile, predicate, locations, domain, folder);
-        }
+		if (fileField != null) {
+			fileField.setAccessible(true);
 
+			try {
+				File file = (File) fileField.get(folderPack);
+				Set<String> domains = folderPack.getResourceDomains();
+
+				if (folderPack instanceof FMLFolderResourcePack) {
+					domains.add(((FMLFolderResourcePack) folderPack).getFMLContainer().getModId());
+				}
+
+				for (String domain : domains) {
+					String prefix = "assets/" + domain + "/" + folder;
+					File pathFile = new File(file, prefix);
+
+					this.enumerateFiles(folderPack, pathFile, predicate, locations, domain, folder);
+				}
+			} catch (IllegalAccessException e) {
+				GeckoLib.LOGGER.error(e);
+			}
+		}
     }
 
 	private void enumerateFiles(FolderResourcePack folderPack, File parent, Predicate<String> predicate,
