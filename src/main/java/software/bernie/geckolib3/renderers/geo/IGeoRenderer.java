@@ -192,18 +192,18 @@ public interface IGeoRenderer<T> {
 		last.y = position.y;
 		last.z = position.z;
 
-		RenderHelper.disableStandardItemLighting();
+		//RenderHelper.disableStandardItemLighting();
 
-		Matrix4f curRot = PositionUtils.getCurrentMatrix();
-		PositionUtils.setInitialWorldPos();
-		Matrix4f cur2 = PositionUtils.getCurrentRotation(curRot, PositionUtils.getCurrentMatrix());
+		//Matrix4f curRot = PositionUtils.getCurrentMatrix();
+		//PositionUtils.setInitialWorldPos();
+		//Matrix4f cur2 = PositionUtils.getCurrentRotation(curRot, PositionUtils.getCurrentMatrix());
 
 		emitter.rotation.setIdentity();
 
 		MATRIX_STACK.push();
 
 		ROTATION_MAT.setIdentity();
-		ROTATION_MAT.setElement(0, 0, cur2.m00);
+		/*ROTATION_MAT.setElement(0, 0, cur2.m00);
 		ROTATION_MAT.setElement(0, 1, cur2.m01);
 		ROTATION_MAT.setElement(0, 2, cur2.m02);
 		ROTATION_MAT.setElement(1, 0, cur2.m10);
@@ -211,7 +211,7 @@ public interface IGeoRenderer<T> {
 		ROTATION_MAT.setElement(1, 2, cur2.m12);
 		ROTATION_MAT.setElement(2, 0, cur2.m20);
 		ROTATION_MAT.setElement(2, 1, cur2.m21);
-		ROTATION_MAT.setElement(2, 2, cur2.m22);
+		ROTATION_MAT.setElement(2, 2, cur2.m22);*/
 		MATRIX_STACK.getModelMatrix().mul(ROTATION_MAT);
 
 		applyBoneChainTransform(locator);
@@ -226,7 +226,7 @@ public interface IGeoRenderer<T> {
 
 		MATRIX_STACK.pop();
 		emitter.render(Minecraft.getMinecraft().getRenderPartialTicks());
-		RenderHelper.enableStandardItemLighting();
+		//RenderHelper.enableStandardItemLighting();
 	}
 
 	static void applyBoneChainTransform(GeoBone bone) {
