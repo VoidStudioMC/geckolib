@@ -128,37 +128,13 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 		return null;
 	}
 
-    private List<ResourceLocation> getLocations(IResourcePack pack, String folder, Predicate<String> predicate) {
-		if (pack instanceof LegacyV2Adapter) {
-			LegacyV2Adapter adapter = (LegacyV2Adapter) pack;
-			Field packField = null;
-
-			for (Field field : adapter.getClass().getDeclaredFields()) {
-				if (field.getType() == IResourcePack.class) {
-					packField = field;
-
-					break;
-				}
-			}
-
-			if (packField != null) {
-				packField.setAccessible(true);
-
-				try {
-					return this.getLocations((IResourcePack) packField.get(adapter), folder, predicate);
-				} catch (Exception e) {
-				}
-			}
-		}
-
+	private List<ResourceLocation> getLocations(IResourcePack pack, String folder, Predicate<String> predicate) {
 		List<ResourceLocation> locations = new ArrayList<>();
 
 		if (pack instanceof FolderResourcePack) {
-			FolderResourcePack folderResourcePack = (FolderResourcePack) pack;
-			this.handleFolderResourcePack(folderResourcePack, folder, predicate, locations);
+			this.handleFolderResourcePack((FolderResourcePack) pack, folder, predicate, locations);
 		} else if (pack instanceof FileResourcePack) {
-			FileResourcePack fileResourcePack = (FileResourcePack) pack;
-			this.handleZipResourcePack(fileResourcePack, folder, predicate, locations);
+			this.handleZipResourcePack((FileResourcePack) pack, folder, predicate, locations);
 		}
 
 		return locations;
@@ -166,8 +142,7 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	/* Folder handling */
 
-	private void handleFolderResourcePack(FolderResourcePack folderPack, String folder, Predicate<String> predicate,
-			List<ResourceLocation> locations) {
+	private void handleFolderResourcePack(FolderResourcePack folderPack, String folder, Predicate<String> predicate, List<ResourceLocation> locations) {
 		Field fileField = null;
 
 		for (Field field : AbstractResourcePack.class.getDeclaredFields()) {
@@ -199,10 +174,9 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 				GeckoLib.LOGGER.error(e);
 			}
 		}
-    }
+	}
 
-	private void enumerateFiles(FolderResourcePack folderPack, File parent, Predicate<String> predicate,
-			List<ResourceLocation> locations, String domain, String prefix) {
+	private void enumerateFiles(FolderResourcePack folderPack, File parent, Predicate<String> predicate, List<ResourceLocation> locations, String domain, String prefix) {
 		File[] files = parent.listFiles();
 
 		if (files == null) {
@@ -220,19 +194,30 @@ public class GeckoLibCache implements IResourceManagerReloadListener {
 
 	/* Zip handling */
 
-	private void handleZipResourcePack(FileResourcePack filePack, String folder, Predicate<String> predicate,
-			List<ResourceLocation> locations) {
-        try {
-            this.enumerateZipFile(filePack, folder, filePack.getResourcePackZipFile(), predicate, locations);
-        } catch (IOException e) {
-            GeckoLib.LOGGER.error(e);
-        }
+	private void handleZipResourcePack(FileResourcePack filePack, String folder, Predicate<String> predicate, List<ResourceLocation> locations) {
+		Field zipField = null;
 
+		for (Field field : FileResourcePack.class.getDeclaredFields()) {
+			if (field.getType() == ZipFile.class) {
+				zipField = field;
+				break;
+			}
+		}
+
+		if (zipField != null) {
+			zipField.setAccessible(true);
+
+			try {
+				this.enumerateZipFile(filePack, folder, (ZipFile) zipField.get(filePack), predicate, locations);
+			} catch (IllegalAccessException e) {
+				GeckoLib.LOGGER.error(e);
+			}
+		}
 	}
 
-	private void enumerateZipFile(FileResourcePack filePack, String folder, ZipFile file, Predicate<String> predicate,
-			List<ResourceLocation> locations) {
+	private void enumerateZipFile(FileResourcePack filePack, String folder, ZipFile file, Predicate<String> predicate, List<ResourceLocation> locations) {
 		Set<String> domains = filePack.getResourceDomains();
+		if (file == null) return;
 		Enumeration<? extends ZipEntry> it = file.entries();
 
 		while (it.hasMoreElements()) {
