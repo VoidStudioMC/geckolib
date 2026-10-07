@@ -4,6 +4,7 @@ import javax.vecmath.*;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.tileentity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.renderer.BufferBuilder;
@@ -166,7 +167,7 @@ public interface IGeoRenderer<T> {
 
 				GeoBone bone = resolveLocatorBone(model, emitter);
 				if (bone != null) {
-					renderParticle(emitter, bone, ticks);
+					renderParticle(emitter, animatableArg, bone, ticks);
 				}
 			}
 		}
@@ -180,17 +181,24 @@ public interface IGeoRenderer<T> {
 		return emitter.cachedLocatorBone;
 	}
 
-	static void renderParticle(BedrockEmitter emitter, GeoBone locator, float ticks) {
+	static void renderParticle(BedrockEmitter emitter, Object animatableArg, GeoBone locator, float ticks) {
 		Vector3d prev = emitter.prevGlobal;
 		Vector3d last = emitter.lastGlobal;
 		prev.x = last.x;
 		prev.y = last.y;
 		prev.z = last.z;
 
-		Vector3d position = PositionUtils.getCurrentRenderPos();
-		last.x = position.x;
-		last.y = position.y;
-		last.z = position.z;
+		if (animatableArg instanceof TileEntity) {
+			TileEntity anim =  (TileEntity) animatableArg;
+			last.x = anim.getPos().getX();
+			last.y = anim.getPos().getY();
+			last.z = anim.getPos().getZ();
+		} else {
+			Vector3d position = PositionUtils.getCurrentRenderPos();
+			last.x = position.x;
+			last.y = position.y;
+			last.z = position.z;
+		}
 
 		//RenderHelper.disableStandardItemLighting();
 
