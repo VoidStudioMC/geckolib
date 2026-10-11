@@ -32,6 +32,10 @@ public final class CubeRenderCommand {
 
     public void render(BufferBuilder builder, Vector3f tempNormal, Vector4f tempVertex) {
         for (GeoQuad quad : cube.quads) {
+            if (quad == null) {
+                continue;
+            }
+
             tempNormal.set(quad.normal.getX(), quad.normal.getY(), quad.normal.getZ());
             normalMatrix.transform(tempNormal);
 

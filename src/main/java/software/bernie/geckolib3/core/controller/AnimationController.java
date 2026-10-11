@@ -495,25 +495,19 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 			}
 			if (currentAnimation != null) {
 				setAnimTime(parser, 0);
-
-				Map<String, IBone> boneLookup = new HashMap<>(modelRendererList.size());
-				for (IBone bone : modelRendererList) {
-					boneLookup.put(bone.getName(), bone);
-				}
-
 				for (BoneAnimation boneAnimation : currentAnimation.boneAnimations) {
 					BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneAnimation.boneName);
 					BoneSnapshot boneSnapshot = this.boneSnapshots.get(boneAnimation.boneName);
-
-					IBone bone = boneLookup.get(boneAnimation.boneName);
-					if (bone == null) {
+					Optional<IBone> first = modelRendererList.stream()
+							.filter(x -> x.getName().equals(boneAnimation.boneName)).findFirst();
+					if (!first.isPresent()) {
 						if (crashWhenCantFindBone) {
 							throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
 						} else {
 							continue;
 						}
 					}
-					BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
+					BoneSnapshot initialSnapshot = first.get().getInitialSnapshot();
 					assert boneSnapshot != null : "Bone snapshot was null";
 
 					VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
@@ -600,20 +594,12 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 	// At the beginning of a new transition, save a snapshot of the model's
 	// rotation, position, and scale values as the initial value to lerp from
 	private void saveSnapshotsForAnimation(Animation animation,
-			HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
-		if (animation == null || animation.boneAnimations == null) {
-			return;
-		}
-
-		Set<String> animatedBoneNames = new HashSet<>(animation.boneAnimations.size());
-		for (BoneAnimation boneAnimation : animation.boneAnimations) {
-			animatedBoneNames.add(boneAnimation.boneName);
-		}
-
+										   HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
 		for (Pair<IBone, BoneSnapshot> snapshot : boneSnapshotCollection.values()) {
-			String boneName = snapshot.getLeft().getName();
-			if (animatedBoneNames.contains(boneName)) {
-				this.boneSnapshots.put(boneName, new BoneSnapshot(snapshot.getRight()));
+			if (animation != null && animation.boneAnimations != null) {
+				if (animation.boneAnimations.stream().anyMatch(x -> x.boneName.equals(snapshot.getLeft().getName()))) {
+					this.boneSnapshots.put(snapshot.getLeft().getName(), new BoneSnapshot(snapshot.getRight()));
+				}
 			}
 		}
 	}
@@ -754,11 +740,9 @@ public class AnimationController<T extends IAnimatable> implements IAdvControlle
 
 	// Helper method to populate all the initial animation point queues
 	private void createInitialQueues(List<IBone> modelRendererList) {
-		if (boneAnimationQueues.size() != modelRendererList.size()) {
-			boneAnimationQueues.clear();
-			for (IBone modelRenderer : modelRendererList) {
-				boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
-			}
+		boneAnimationQueues.clear();
+		for (IBone modelRenderer : modelRendererList) {
+			boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
 		}
 	}
 

@@ -71,6 +71,12 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks {
+    jar {
+        manifest {
+            attributes("FMLAT" to "geckolib3_at.cfg")
+        }
+    }
+
     shadowJar {
         configurations = listOf(shade)
 

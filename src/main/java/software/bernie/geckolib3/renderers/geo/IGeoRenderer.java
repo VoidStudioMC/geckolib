@@ -192,7 +192,7 @@ public interface IGeoRenderer<T> {
 		last.y = position.y;
 		last.z = position.z;
 
-		RenderHelper.disableStandardItemLighting();
+		//RenderHelper.disableStandardItemLighting();
 
 		Matrix4f curRot = PositionUtils.getCurrentMatrix();
 		PositionUtils.setInitialWorldPos();
@@ -226,7 +226,7 @@ public interface IGeoRenderer<T> {
 
 		MATRIX_STACK.pop();
 		emitter.render(Minecraft.getMinecraft().getRenderPartialTicks());
-		RenderHelper.enableStandardItemLighting();
+		//RenderHelper.enableStandardItemLighting();
 	}
 
 	static void applyBoneChainTransform(GeoBone bone) {
