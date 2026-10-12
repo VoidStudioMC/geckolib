@@ -1,14 +1,13 @@
 package software.bernie.geckolib3.renderers.geo;
 
 import javax.vecmath.*;
+import javax.vecmath.Matrix4f;
+import javax.vecmath.Vector3d;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.*;
 import org.lwjgl.opengl.GL11;
 
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import software.bernie.geckolib3.core.controller.IAdvController;
@@ -37,7 +36,6 @@ public interface IGeoRenderer<T> {
 	CubeRenderBuffer TRANSPARENT_BUFFER = new CubeRenderBuffer();
 
 	default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue, float alpha) {
-		//GlStateManager.enableCull();
 		GlStateManager.enableRescaleNormal();
 		renderEarly(animatable, partialTicks, red, green, blue, alpha);
 
@@ -71,7 +69,6 @@ public interface IGeoRenderer<T> {
 		Tessellator.getInstance().draw();
 
 		GlStateManager.depthMask(true);
-		GlStateManager.disableBlend();
 		renderAfter(animatable, partialTicks, red, green, blue, alpha);
 		drawParticles(model, animatable, partialTicks);
 		GlStateManager.disableRescaleNormal();
@@ -192,7 +189,7 @@ public interface IGeoRenderer<T> {
 		last.y = position.y;
 		last.z = position.z;
 
-		//RenderHelper.disableStandardItemLighting();
+		RenderHelper.disableStandardItemLighting();
 
 		Matrix4f curRot = PositionUtils.getCurrentMatrix();
 		PositionUtils.setInitialWorldPos();
@@ -226,7 +223,8 @@ public interface IGeoRenderer<T> {
 
 		MATRIX_STACK.pop();
 		emitter.render(Minecraft.getMinecraft().getRenderPartialTicks());
-		//RenderHelper.enableStandardItemLighting();
+
+		RenderHelper.enableStandardItemLighting();
 	}
 
 	static void applyBoneChainTransform(GeoBone bone) {
